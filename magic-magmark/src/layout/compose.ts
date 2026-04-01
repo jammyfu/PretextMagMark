@@ -114,7 +114,7 @@ function layoutBlock(
     case 'heading': {
       const styleName = block.depth === 1 ? 'h1' : block.depth === 2 ? 'h2' : block.depth === 3 ? 'h3' : 'eyebrow'
       const gapBefore = context.previous === null ? 0 : theme.rhythm.sectionGap + (block.depth === 1 ? 6 : block.depth === 4 ? -4 : 0)
-      const lines = layoutStyledSpans(block.spans, styleName, maxWidth, theme)
+      const lines = layoutStyledSpans(block.spans, styleName, maxWidth * getHeadingMeasureRatio(block.depth, theme), theme)
       const rows = createTextRows(lines, x, startY + gapBefore, theme, styleName)
       const endY = rows.length === 0 ? startY + gapBefore : rows[rows.length - 1]!.y + rows[rows.length - 1]!.height
       return { rows, nextY: endY + (block.depth === 1 ? 20 : block.depth === 4 ? 8 : theme.rhythm.compactGap) }
@@ -123,17 +123,18 @@ function layoutBlock(
     case 'paragraph': {
       const isLead = context.previous === null || context.previous.kind === 'heading' || context.previous.kind === 'divider' || context.previous.kind === 'page-break'
       const styleName: InlineStyleName = isLead ? 'lead' : 'body'
-      const lines = layoutStyledSpans(block.spans, styleName, maxWidth, theme)
+      const measureRatio = isLead ? theme.composition.leadMeasureRatio : theme.composition.bodyMeasureRatio
+      const lines = layoutStyledSpans(block.spans, styleName, maxWidth * measureRatio, theme)
       const firstLineIndent = isLead ? theme.rhythm.leadIndent : theme.rhythm.paragraphIndent
       const rows = createTextRows(lines, x, startY, theme, styleName, undefined, undefined, firstLineIndent)
-      if (!isLead) applyJustification(rows, maxWidth)
+      if (!isLead) applyJustification(rows, maxWidth * measureRatio, theme)
       const endY = rows.length === 0 ? startY : rows[rows.length - 1]!.y + rows[rows.length - 1]!.height
       return { rows, nextY: endY + (isLead ? theme.rhythm.sectionGap : theme.rhythm.compactGap) }
     }
 
     case 'blockquote': {
       const inset = 54
-      const lines = layoutStyledSpans(block.spans, 'quote', maxWidth - inset - 20, theme)
+      const lines = layoutStyledSpans(block.spans, 'quote', (maxWidth - inset - 20) * theme.composition.quoteMeasureRatio, theme)
       const rows = createTextRows(lines, x + inset, startY + 20, theme, 'quote', undefined, 'quote')
       const endY = rows.length === 0 ? startY + 20 : rows[rows.length - 1]!.y + rows[rows.length - 1]!.height
       return { rows, nextY: endY + theme.rhythm.sectionGap }
@@ -141,7 +142,7 @@ function layoutBlock(
 
     case 'pull-quote': {
       const inset = 92
-      const lines = layoutStyledSpans(block.spans, 'quote', maxWidth - inset * 2 + 28, theme)
+      const lines = layoutStyledSpans(block.spans, 'quote', (maxWidth - inset * 2 + 28) * theme.composition.pullQuoteMeasureRatio, theme)
       const rows = createTextRows(lines, x + inset, startY + 28, theme, 'quote', undefined, 'pull-quote')
       const endY = rows.length === 0 ? startY + 28 : rows[rows.length - 1]!.y + rows[rows.length - 1]!.height
       return { rows, nextY: endY + theme.rhythm.sectionGap }
@@ -155,7 +156,8 @@ function layoutBlock(
         const prefixText = block.ordered ? `${itemIndex + 1}.` : '-'
         const prefixWidth = measureSingleLine(prefixText, theme.styles['list-prefix'].font)
         const indent = prefixWidth + 24
-        const lines = layoutStyledSpans(item, 'body', maxWidth - indent, theme)
+        const listMeasure = (maxWidth - indent) * theme.composition.bodyMeasureRatio
+        const lines = layoutStyledSpans(item, 'body', listMeasure, theme)
         const itemRows = createTextRows(
           lines,
           x + indent,
@@ -164,7 +166,7 @@ function layoutBlock(
           'body',
           { text: prefixText, width: prefixWidth, styleName: 'list-prefix' },
         )
-        applyJustification(itemRows, maxWidth - indent)
+        applyJustification(itemRows, listMeasure, theme)
         rows.push(...itemRows)
         y = itemRows.length === 0 ? y + theme.rhythm.compactGap : itemRows[itemRows.length - 1]!.y + itemRows[itemRows.length - 1]!.height + 8
       }
@@ -504,7 +506,7 @@ function createTextRows(
   return rows
 }
 
-function applyJustification(rows: TextRow[], targetWidth: number): void {
+function applyJustification(rows: TextRow[], targetWidth: number, theme: Theme): void {
   if (rows.length <= 1) return
   for (let index = 0; index < rows.length - 1; index++) {
     const row = rows[index]!
@@ -512,11 +514,23 @@ function applyJustification(rows: TextRow[], targetWidth: number): void {
     if (slots === 0 || row.lineWidth === undefined) continue
     const fillRatio = row.lineWidth / targetWidth
     const averageExpansion = (targetWidth - row.lineWidth) / slots
-    if (fillRatio < 0.8) continue
-    if (slots < 3) continue
-    if (averageExpansion > 10) continue
+    if (fillRatio < theme.composition.justifyMinFillRatio) continue
+    if (slots < theme.composition.justifyMinSlots) continue
+    if (averageExpansion > theme.composition.justifyMaxAverageExpansion) continue
     row.targetWidth = targetWidth
     row.justifySlots = slots
+  }
+}
+
+function getHeadingMeasureRatio(depth: 1 | 2 | 3 | 4, theme: Theme): number {
+  switch (depth) {
+    case 1:
+      return theme.composition.h1MeasureRatio
+    case 2:
+      return theme.composition.h2MeasureRatio
+    case 3:
+    case 4:
+      return theme.composition.h3MeasureRatio
   }
 }
 

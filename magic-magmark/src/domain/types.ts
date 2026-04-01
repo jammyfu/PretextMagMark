@@ -54,6 +54,7 @@ export type TextStyle = {
 
 export type Theme = {
   name: string
+  languageMode: LanguageModeKey
   background: string
   pageFill: string
   pageEdge: string
@@ -69,6 +70,18 @@ export type Theme = {
     paragraphIndent: number
     sectionGap: number
     compactGap: number
+  }
+  composition: {
+    bodyMeasureRatio: number
+    leadMeasureRatio: number
+    h1MeasureRatio: number
+    h2MeasureRatio: number
+    h3MeasureRatio: number
+    quoteMeasureRatio: number
+    pullQuoteMeasureRatio: number
+    justifyMinFillRatio: number
+    justifyMinSlots: number
+    justifyMaxAverageExpansion: number
   }
 }
 

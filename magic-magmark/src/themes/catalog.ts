@@ -34,7 +34,7 @@ const PRESETS: Record<PresetKey, Preset> = {
   },
 }
 
-type Palette = Omit<Theme, 'name' | 'styles' | 'rhythm'>
+type Palette = Omit<Theme, 'name' | 'languageMode' | 'styles' | 'rhythm' | 'composition'>
 type FontPack = {
   name: string
   body: string
@@ -227,9 +227,13 @@ function createTheme(
   languageMode: LanguageModeKey,
 ): Theme {
   const adjustedFontPack = resolveFontPackForLanguage(fontPack, languageMode)
+  const composition = createComposition(languageMode)
+  const paragraphIndent = resolveParagraphIndent(languageMode, density.paragraphIndent)
+  const compactGap = resolveCompactGap(languageMode, density.compactGap)
 
   return {
     ...palette,
+    languageMode,
     name: `${palette.name} / ${adjustedFontPack.name} / ${density.name} / ${languageMode}`,
     styles: {
       body: style(`400 ${density.bodySize}px ${adjustedFontPack.body}`, palette.ink, density.bodyLeading),
@@ -248,10 +252,11 @@ function createTheme(
     },
     rhythm: {
       leadIndent: 0,
-      paragraphIndent: density.paragraphIndent,
+      paragraphIndent,
       sectionGap: density.sectionGap,
-      compactGap: density.compactGap,
+      compactGap,
     },
+    composition,
   }
 }
 
@@ -272,5 +277,71 @@ function style(font: string, color: string, lineHeight: number): TextStyle {
     lineHeight,
     gapWidth: 0,
     inlinePaddingX: 0,
+  }
+}
+
+function resolveParagraphIndent(languageMode: LanguageModeKey, fallback: number): number {
+  switch (languageMode) {
+    case 'zh':
+      return fallback
+    case 'en':
+      return 0
+    default:
+      return Math.round(fallback * 0.45)
+  }
+}
+
+function resolveCompactGap(languageMode: LanguageModeKey, fallback: number): number {
+  switch (languageMode) {
+    case 'zh':
+      return fallback
+    case 'en':
+      return fallback + 6
+    default:
+      return fallback + 3
+  }
+}
+
+function createComposition(languageMode: LanguageModeKey): Theme['composition'] {
+  switch (languageMode) {
+    case 'zh':
+      return {
+        bodyMeasureRatio: 1,
+        leadMeasureRatio: 0.96,
+        h1MeasureRatio: 0.9,
+        h2MeasureRatio: 0.94,
+        h3MeasureRatio: 0.96,
+        quoteMeasureRatio: 0.94,
+        pullQuoteMeasureRatio: 0.82,
+        justifyMinFillRatio: 0.74,
+        justifyMinSlots: 2,
+        justifyMaxAverageExpansion: 14,
+      }
+    case 'en':
+      return {
+        bodyMeasureRatio: 0.92,
+        leadMeasureRatio: 0.86,
+        h1MeasureRatio: 0.76,
+        h2MeasureRatio: 0.82,
+        h3MeasureRatio: 0.88,
+        quoteMeasureRatio: 0.86,
+        pullQuoteMeasureRatio: 0.78,
+        justifyMinFillRatio: 0.9,
+        justifyMinSlots: 4,
+        justifyMaxAverageExpansion: 7,
+      }
+    default:
+      return {
+        bodyMeasureRatio: 0.96,
+        leadMeasureRatio: 0.9,
+        h1MeasureRatio: 0.82,
+        h2MeasureRatio: 0.88,
+        h3MeasureRatio: 0.92,
+        quoteMeasureRatio: 0.9,
+        pullQuoteMeasureRatio: 0.8,
+        justifyMinFillRatio: 0.84,
+        justifyMinSlots: 3,
+        justifyMaxAverageExpansion: 9,
+      }
   }
 }
