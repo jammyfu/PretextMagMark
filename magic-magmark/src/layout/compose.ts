@@ -62,6 +62,7 @@ function buildLongImagePages(blocks: MarkdownBlock[], preset: Preset, theme: The
 }
 
 function prependCoverPage(blocks: MarkdownBlock[], preset: Preset, pages: PageLayout[], coverTemplate: CoverTemplateKey): PageLayout[] {
+  if (coverTemplate === 'none') return pages
   const cover = extractCoverData(blocks, coverTemplate)
   if (cover === null) return pages
   return [{

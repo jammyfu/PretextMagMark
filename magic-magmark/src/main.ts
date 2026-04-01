@@ -80,7 +80,7 @@ const st: State = {
   languageMode: 'mixed',
   densityKey: 'balanced',
   ornament: 'editorial',
-  coverTemplate: 'portrait',
+  coverTemplate: 'none',
   scale: 3,
   currentPageIndex: 0,
   document: null,

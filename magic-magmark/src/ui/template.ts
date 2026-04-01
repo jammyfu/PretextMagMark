@@ -40,7 +40,7 @@ type UiCopy = {
   densityOptions: Record<'airy' | 'balanced' | 'compact', string>
   scaleOptions: Record<'2' | '3' | '4', string>
   ornamentOptions: Record<'editorial' | 'minimal', string>
-  coverOptions: Record<'portrait' | 'feature-split', string>
+  coverOptions: Record<'none' | 'portrait' | 'feature-split', string>
   languageModeOptions: Record<'mixed' | 'zh' | 'en', string>
 }
 
@@ -104,6 +104,7 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
       minimal: '极简',
     },
     coverOptions: {
+      none: '不生成封面',
       portrait: '人物封面',
       'feature-split': '专题分栏',
     },
@@ -172,6 +173,7 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
       minimal: 'Minimal',
     },
     coverOptions: {
+      none: 'No cover page',
       portrait: 'Portrait cover',
       'feature-split': 'Feature split',
     },
@@ -241,7 +243,7 @@ export function renderAppShell(): string {
             <label><span id="density-label"></span><select id="density-select"><option value="airy"></option><option value="balanced" selected></option><option value="compact"></option></select></label>
             <label><span id="scale-label"></span><select id="scale-select"><option value="2"></option><option value="3" selected></option><option value="4"></option></select></label>
             <label><span id="ornament-label"></span><select id="ornament-select"><option value="editorial"></option><option value="minimal"></option></select></label>
-            <label><span id="cover-label"></span><select id="cover-template-select"><option value="portrait"></option><option value="feature-split"></option></select></label>
+            <label><span id="cover-label"></span><select id="cover-template-select"><option value="none"></option><option value="portrait"></option><option value="feature-split"></option></select></label>
           </div>
         </div>
 
