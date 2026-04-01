@@ -48,18 +48,18 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
   zh: {
     appEyebrow: 'MagicMagMark / Editorial Studio',
     appTitle: 'MagMark 风格编辑台',
-    appIntro: '围绕 Pretext 排版内核，像编辑器一样组织内容、风格和导出。',
+    appIntro: '把编辑逻辑集中到顶部，下面专注内容编辑和成品预览。',
     modeStudio: 'Studio',
     modeSource: 'Markdown',
     modePreview: 'Preview',
     uiLanguageLabel: '界面语言',
-    contentTitle: '内容与资源',
+    contentTitle: '内容',
     importMarkdown: '导入 Markdown',
     importImages: '导入图片',
     loadSample: '载入示例',
     fileName: '文件名',
     markdown: 'Markdown 源文',
-    exportTitle: '版式与输出',
+    exportTitle: '版式',
     preset: '预设',
     theme: '主题',
     fontPack: '字体包',
@@ -68,7 +68,7 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
     scale: '导出倍率',
     ornament: '装饰',
     cover: '封面',
-    actionsTitle: '导出操作',
+    actionsTitle: '操作',
     reflow: '重新排版',
     exportCurrent: '导出当前页',
     exportAll: '导出全部',
@@ -78,7 +78,7 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
     livePreview: '设备预览',
     previewSubheading: '社交卡片与长图输出预览',
     editorHeading: '编辑区域',
-    editorHint: '像 MagMark 一样，在左侧完成内容编辑和风格切换。',
+    editorHint: '在这里直接修改 Markdown 内容。',
     statsHeading: '文档信息',
     presetOptions: {
       xiaohongshu: '小红书 1080×1440',
@@ -116,18 +116,18 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
   en: {
     appEyebrow: 'MagicMagMark / Editorial Studio',
     appTitle: 'MagMark-style editorial workspace',
-    appIntro: 'Use Pretext as the layout core while the app behaves like an editorial studio.',
+    appIntro: 'Move editing logic to the top so the lower area focuses on content and preview.',
     modeStudio: 'Studio',
     modeSource: 'Markdown',
     modePreview: 'Preview',
     uiLanguageLabel: 'UI language',
-    contentTitle: 'Content & assets',
+    contentTitle: 'Content',
     importMarkdown: 'Import Markdown',
     importImages: 'Import images',
     loadSample: 'Load sample',
     fileName: 'File name',
     markdown: 'Markdown source',
-    exportTitle: 'Layout & output',
+    exportTitle: 'Layout',
     preset: 'Preset',
     theme: 'Theme',
     fontPack: 'Font pack',
@@ -136,7 +136,7 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
     scale: 'Scale',
     ornament: 'Ornament',
     cover: 'Cover',
-    actionsTitle: 'Export actions',
+    actionsTitle: 'Actions',
     reflow: 'Reflow',
     exportCurrent: 'Export current',
     exportAll: 'Export all',
@@ -146,7 +146,7 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
     livePreview: 'Device preview',
     previewSubheading: 'Preview social cards and long-image output',
     editorHeading: 'Editor',
-    editorHint: 'Work on content, controls, and output from the left studio panel.',
+    editorHint: 'Edit Markdown directly in the workspace below.',
     statsHeading: 'Document info',
     presetOptions: {
       xiaohongshu: 'Xiaohongshu 1080×1440',
@@ -202,152 +202,81 @@ export function renderAppShell(): string {
         </div>
       </header>
 
-      <section class="workspace-main">
-        <aside class="studio-sidebar">
-          <section class="studio-card studio-card-compact">
-            <div class="studio-grid studio-grid-single">
-              <label>
-                <span id="ui-language-label"></span>
-                <select id="ui-language-select">
-                  <option value="zh">中文</option>
-                  <option value="en">English</option>
-                </select>
-              </label>
-            </div>
-          </section>
-
-          <section class="studio-card">
-            <div class="card-head">
-              <div>
-                <p id="content-title" class="card-kicker"></p>
-                <h2 id="editor-heading" class="card-title"></h2>
-              </div>
-              <p id="editor-hint" class="card-note"></p>
-            </div>
-
-            <div class="toolbar-row">
-              <label class="tool-button tool-button-soft">
-                <span id="import-markdown-label"></span>
-                <input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain">
-              </label>
-              <label class="tool-button tool-button-soft">
-                <span id="import-images-label"></span>
-                <input id="image-files" type="file" accept="image/*" multiple>
-              </label>
-              <button id="sample-button" class="tool-button tool-button-soft" type="button"></button>
-            </div>
-
-            <div class="studio-grid studio-grid-single">
-              <label>
-                <span id="file-name-label"></span>
-                <input id="document-name" type="text" value="magic-magmark">
-              </label>
-            </div>
-
-            <label class="editor-label">
-              <span id="markdown-label"></span>
-              <textarea id="markdown-input" spellcheck="false"></textarea>
+      <section class="control-deck">
+        <div class="control-card control-card-files">
+          <p id="content-title" class="control-kicker"></p>
+          <div class="control-row">
+            <label>
+              <span id="ui-language-label"></span>
+              <select id="ui-language-select">
+                <option value="zh">中文</option>
+                <option value="en">English</option>
+              </select>
             </label>
-          </section>
+            <label>
+              <span id="file-name-label"></span>
+              <input id="document-name" type="text" value="magic-magmark">
+            </label>
+          </div>
+          <div class="toolbar-row">
+            <label class="tool-button tool-button-soft">
+              <span id="import-markdown-label"></span>
+              <input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain">
+            </label>
+            <label class="tool-button tool-button-soft">
+              <span id="import-images-label"></span>
+              <input id="image-files" type="file" accept="image/*" multiple>
+            </label>
+            <button id="sample-button" class="tool-button tool-button-soft" type="button"></button>
+          </div>
+        </div>
 
-          <section class="studio-card">
-            <div class="card-head">
-              <div>
-                <p id="export-title" class="card-kicker"></p>
-                <h2 id="stats-heading" class="card-title"></h2>
-              </div>
-            </div>
+        <div class="control-card control-card-layout">
+          <p id="export-title" class="control-kicker"></p>
+          <div class="control-grid">
+            <label><span id="preset-label"></span><select id="preset-select"><option value="xiaohongshu"></option><option value="long-image"></option></select></label>
+            <label><span id="theme-label"></span><select id="theme-select"><option value="berry"></option><option value="ink"></option><option value="forest"></option></select></label>
+            <label><span id="font-pack-label"></span><select id="font-pack-select"><option value="serif-cn">Source Han Serif</option><option value="songti">Songti Review</option><option value="sans-editorial">Sans Editorial</option><option value="serif-en">English Serif</option></select></label>
+            <label><span id="language-mode-label"></span><select id="language-mode-select"><option value="mixed" selected></option><option value="zh"></option><option value="en"></option></select></label>
+            <label><span id="density-label"></span><select id="density-select"><option value="airy"></option><option value="balanced" selected></option><option value="compact"></option></select></label>
+            <label><span id="scale-label"></span><select id="scale-select"><option value="2"></option><option value="3" selected></option><option value="4"></option></select></label>
+            <label><span id="ornament-label"></span><select id="ornament-select"><option value="editorial"></option><option value="minimal"></option></select></label>
+            <label><span id="cover-label"></span><select id="cover-template-select"><option value="portrait"></option><option value="feature-split"></option></select></label>
+          </div>
+        </div>
 
-            <div class="studio-grid studio-grid-double">
-              <label>
-                <span id="preset-label"></span>
-                <select id="preset-select">
-                  <option value="xiaohongshu"></option>
-                  <option value="long-image"></option>
-                </select>
-              </label>
-              <label>
-                <span id="theme-label"></span>
-                <select id="theme-select">
-                  <option value="berry"></option>
-                  <option value="ink"></option>
-                  <option value="forest"></option>
-                </select>
-              </label>
-              <label>
-                <span id="font-pack-label"></span>
-                <select id="font-pack-select">
-                  <option value="serif-cn">Source Han Serif</option>
-                  <option value="songti">Songti Review</option>
-                  <option value="sans-editorial">Sans Editorial</option>
-                  <option value="serif-en">English Serif</option>
-                </select>
-              </label>
-              <label>
-                <span id="language-mode-label"></span>
-                <select id="language-mode-select">
-                  <option value="mixed" selected></option>
-                  <option value="zh"></option>
-                  <option value="en"></option>
-                </select>
-              </label>
-              <label>
-                <span id="density-label"></span>
-                <select id="density-select">
-                  <option value="airy"></option>
-                  <option value="balanced" selected></option>
-                  <option value="compact"></option>
-                </select>
-              </label>
-              <label>
-                <span id="scale-label"></span>
-                <select id="scale-select">
-                  <option value="2"></option>
-                  <option value="3" selected></option>
-                  <option value="4"></option>
-                </select>
-              </label>
-              <label>
-                <span id="ornament-label"></span>
-                <select id="ornament-select">
-                  <option value="editorial"></option>
-                  <option value="minimal"></option>
-                </select>
-              </label>
-              <label>
-                <span id="cover-label"></span>
-                <select id="cover-template-select">
-                  <option value="portrait"></option>
-                  <option value="feature-split"></option>
-                </select>
-              </label>
-            </div>
-          </section>
+        <div class="control-card control-card-actions">
+          <p id="actions-title" class="control-kicker"></p>
+          <span id="stats-heading" class="visually-hidden"></span>
+          <div class="toolbar-row">
+            <button id="render-button" class="tool-button tool-button-primary" type="button"></button>
+            <button id="export-current-button" class="tool-button tool-button-soft" type="button"></button>
+            <button id="export-all-button" class="tool-button tool-button-soft" type="button"></button>
+          </div>
+          <div class="pager-row">
+            <button id="prev-page-button" class="tool-button tool-button-soft" type="button"></button>
+            <span id="page-chip" class="page-chip"></span>
+            <button id="next-page-button" class="tool-button tool-button-soft" type="button"></button>
+          </div>
+          <div class="stats-card" id="stats">
+            <div id="waiting-copy"></div>
+          </div>
+        </div>
+      </section>
 
-          <section class="studio-card studio-card-compact">
-            <div class="card-head">
-              <div>
-                <p id="actions-title" class="card-kicker"></p>
-              </div>
+      <section class="workspace-main">
+        <section class="editor-stage">
+          <header class="editor-stage-head">
+            <div>
+              <p id="editor-heading" class="control-kicker"></p>
+              <p id="editor-hint" class="editor-note"></p>
             </div>
-
-            <div class="toolbar-row">
-              <button id="render-button" class="tool-button tool-button-primary" type="button"></button>
-              <button id="export-current-button" class="tool-button tool-button-soft" type="button"></button>
-              <button id="export-all-button" class="tool-button tool-button-soft" type="button"></button>
-            </div>
-
-            <div class="pager-row">
-              <button id="prev-page-button" class="tool-button tool-button-soft" type="button"></button>
-              <span id="page-chip" class="page-chip"></span>
-              <button id="next-page-button" class="tool-button tool-button-soft" type="button"></button>
-            </div>
-
-            <div class="stats-card" id="stats">
-              <div id="waiting-copy"></div>
-            </div>
-          </section>
-        </aside>
+          </header>
+          <label class="editor-label">
+            <span id="markdown-label"></span>
+            <textarea id="markdown-input" spellcheck="false"></textarea>
+          </label>
+        </section>
 
         <section class="preview-stage">
           <header class="preview-stage-head">

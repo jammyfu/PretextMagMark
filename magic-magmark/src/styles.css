@@ -1,10 +1,8 @@
 :root {
   color-scheme: light;
   --bg: #f2ede4;
-  --bg-soft: #f8f5ef;
-  --surface: #ffffff;
-  --surface-soft: #faf8f3;
-  --surface-strong: #f5f1e8;
+  --surface: rgba(255, 252, 247, 0.86);
+  --surface-strong: #faf8f3;
   --ink: #191612;
   --muted: #6c665d;
   --muted-strong: #4f4a43;
@@ -12,12 +10,21 @@
   --accent-strong: #946d24;
   --accent-soft: rgba(179, 138, 61, 0.14);
   --line: rgba(25, 22, 18, 0.11);
-  --line-strong: rgba(25, 22, 18, 0.18);
   --shadow: 0 28px 80px rgba(35, 25, 17, 0.12);
 }
 
-* {
-  box-sizing: border-box;
+* { box-sizing: border-box; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 html,
@@ -27,22 +34,9 @@ body {
   background:
     radial-gradient(circle at top left, rgba(179, 138, 61, 0.18), transparent 22%),
     radial-gradient(circle at 90% 0%, rgba(76, 55, 29, 0.08), transparent 16%),
-    linear-gradient(180deg, #f8f5ef 0%, var(--bg) 56%, #ece5d8 100%);
+    linear-gradient(180deg, #f8f5ef 0%, #ece5d8 100%);
   color: var(--ink);
   font-family: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px);
-  background-size: 22px 22px;
-  opacity: 0.2;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.85), transparent 88%);
 }
 
 #app {
@@ -57,11 +51,12 @@ body::before {
 }
 
 .workspace-topbar,
-.studio-sidebar,
+.control-deck,
+.editor-stage,
 .preview-stage {
   border: 1px solid var(--line);
   border-radius: 24px;
-  background: rgba(255, 252, 247, 0.82);
+  background: var(--surface);
   backdrop-filter: blur(20px);
   box-shadow: var(--shadow);
 }
@@ -79,17 +74,13 @@ body::before {
   gap: 8px;
 }
 
-.workspace-eyebrow {
+.workspace-eyebrow,
+.control-kicker {
   margin: 0;
   color: var(--accent-strong);
-  font: 700 11px/1 "Consolas", "SFMono-Regular", ui-monospace, monospace;
-  letter-spacing: 0.18em;
+  font: 700 11px/1.2 "Consolas", "SFMono-Regular", ui-monospace, monospace;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-}
-
-.workspace-title-group {
-  display: grid;
-  gap: 5px;
 }
 
 .workspace-title {
@@ -99,9 +90,9 @@ body::before {
 }
 
 .workspace-intro {
-  margin: 0;
+  margin: 5px 0 0;
   color: var(--muted);
-  max-width: 62ch;
+  max-width: 64ch;
   line-height: 1.55;
 }
 
@@ -109,7 +100,6 @@ body::before {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  align-items: center;
 }
 
 .mode-pill {
@@ -129,71 +119,77 @@ body::before {
   color: var(--accent-strong);
 }
 
+.control-deck {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr 1.1fr;
+  gap: 0;
+  overflow: hidden;
+}
+
+.control-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-right: 1px solid var(--line);
+}
+
+.control-card:last-child {
+  border-right: 0;
+}
+
+.control-row,
+.control-grid,
+.toolbar-row,
+.pager-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.control-row label,
+.control-grid label {
+  flex: 1 1 180px;
+}
+
+.control-grid label {
+  min-width: 140px;
+}
+
+.pager-row {
+  align-items: center;
+}
+
 .workspace-main {
   display: grid;
-  grid-template-columns: minmax(380px, 520px) minmax(0, 1fr);
+  grid-template-columns: minmax(420px, 1fr) minmax(420px, 640px);
   gap: 18px;
   min-height: 0;
-  flex: 1;
 }
 
-.studio-sidebar {
+.editor-stage,
+.preview-stage {
   display: grid;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.editor-stage {
+  grid-template-rows: auto 1fr;
+  padding: 18px;
   gap: 14px;
-  padding: 14px;
-  align-content: start;
 }
 
-.studio-card {
-  display: grid;
-  gap: 14px;
-  padding: 16px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 244, 237, 0.94));
-  border: 1px solid rgba(25, 22, 18, 0.08);
+.editor-stage-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
 }
 
-.studio-card-compact {
-  gap: 12px;
-}
-
-.card-head {
-  display: grid;
-  gap: 6px;
-}
-
-.card-kicker {
-  margin: 0;
-  color: var(--accent-strong);
-  font: 700 11px/1.2 "Consolas", "SFMono-Regular", ui-monospace, monospace;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.card-title {
-  margin: 0;
-  font: 700 22px/1.05 Georgia, "Times New Roman", "Songti SC", serif;
-  letter-spacing: -0.03em;
-}
-
-.card-note {
-  margin: 0;
+.editor-note {
+  margin: 6px 0 0;
   color: var(--muted);
   font-size: 13px;
-  line-height: 1.55;
-}
-
-.studio-grid {
-  display: grid;
-  gap: 12px;
-}
-
-.studio-grid-single {
-  grid-template-columns: 1fr;
-}
-
-.studio-grid-double {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  line-height: 1.5;
 }
 
 label,
@@ -211,7 +207,7 @@ input[type="text"] {
   width: 100%;
   border: 1px solid rgba(25, 22, 18, 0.1);
   border-radius: 14px;
-  background: var(--surface-soft);
+  background: var(--surface-strong);
   color: var(--ink);
   font: inherit;
   outline: none;
@@ -225,7 +221,7 @@ input[type="text"] {
 }
 
 textarea {
-  min-height: 420px;
+  min-height: 620px;
   padding: 16px;
   resize: vertical;
   font: 13px/1.65 "Cascadia Code", "Consolas", "SFMono-Regular", ui-monospace, monospace;
@@ -237,17 +233,6 @@ input[type="text"]:focus {
   border-color: rgba(179, 138, 61, 0.55);
   box-shadow: 0 0 0 4px rgba(179, 138, 61, 0.13);
   transform: translateY(-1px);
-}
-
-.toolbar-row,
-.pager-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.pager-row {
-  align-items: center;
 }
 
 .tool-button {
@@ -266,9 +251,7 @@ input[type="text"]:focus {
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, opacity 140ms ease, background 140ms ease;
 }
 
-.tool-button:hover {
-  transform: translateY(-1px);
-}
+.tool-button:hover { transform: translateY(-1px); }
 
 .tool-button:disabled {
   opacity: 0.5;
@@ -329,10 +312,7 @@ label.tool-button {
 }
 
 .preview-stage {
-  display: grid;
   grid-template-rows: auto 1fr;
-  min-width: 0;
-  overflow: hidden;
 }
 
 .preview-stage-head {
@@ -372,11 +352,8 @@ label.tool-button {
   width: min(100%, 520px);
   padding: 16px;
   border-radius: 34px;
-  background:
-    linear-gradient(180deg, #27231f 0%, #161310 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 32px 90px rgba(20, 15, 11, 0.26);
+  background: linear-gradient(180deg, #27231f 0%, #161310 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 32px 90px rgba(20, 15, 11, 0.26);
 }
 
 .device-notch {
@@ -401,6 +378,21 @@ canvas {
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
 }
 
+@media (max-width: 1280px) {
+  .control-deck {
+    grid-template-columns: 1fr;
+  }
+
+  .control-card {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .control-card:last-child {
+    border-bottom: 0;
+  }
+}
+
 @media (max-width: 1120px) {
   #app {
     width: min(calc(100vw - 16px), 1120px);
@@ -418,8 +410,9 @@ canvas {
 }
 
 @media (max-width: 720px) {
-  .studio-grid-double {
-    grid-template-columns: 1fr;
+  .control-grid label,
+  .control-row label {
+    min-width: 100%;
   }
 
   .preview-stage-body {
@@ -434,5 +427,9 @@ canvas {
 
   .workspace-title {
     font-size: 30px;
+  }
+
+  textarea {
+    min-height: 480px;
   }
 }
