@@ -100,6 +100,27 @@ const { lines } = layoutWithLines(prepared, 400, 30)
 - 参见 [DEVELOPMENT.md](DEVELOPMENT.md) 了解构建配置与命令。
 - 参见 [RESEARCH.md](RESEARCH.md) 了解本项目在浏览器测量兼容性、Emoji 渲染补偿等方面的技术内幕。
 
+## 🛠️ 环境准备与故障排查
+
+如果你在本地运行或安装时遇到问题，可以参考以下操作：
+
+### 1. 安装 Bun (推荐)
+本项目优先使用 Bun 作为包管理器和运行时。如果在 Windows 上提示找不到 `bun` 命令，请在 PowerShell 中运行以下命令进行安装：
+```powershell
+powershell -c "irm bun.sh/install.ps1 | iex"
+```
+安装完成后，你可能需要重启终端或将 `C:\Users\你的用户名\.bun\bin` 手动添加到系统的 `PATH` 环境变量中。
+
+### 2. 依赖冲突修复 (ERESOLVE)
+如果你使用 `npm install` 时遇到 `oxlint` 相关的 `ERESOLVE` 错误，请确保 `package.json` 中的 `oxlint-tsgolint` 版本已更新至 `^0.19.0` 或更高。
+
+### 3. 使用 npm 替代
+如果你暂时无法使用 Bun，也可以使用 `npm` 进行安装，并配合 `tsx` 来运行项目中的 `.ts` 脚本：
+```sh
+npm install
+npx tsx scripts/your-script.ts
+```
+
 ## 📜 致谢
 
 - **Sebastian Markbage**：设计了最初的测量架构演算法。
