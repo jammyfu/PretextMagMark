@@ -1,7 +1,16 @@
 import './styles.css'
 import { countImageRefs, releaseImageAssets, resolveImageAssets } from './assets/images'
 import { SAMPLE_MARKDOWN } from './content/sample'
-import type { CoverTemplateKey, DensityKey, FontPackKey, LanguageModeKey, OrnamentKey, PresetKey, RenderDocument, ThemeKey } from './domain/types'
+import type {
+  CoverTemplateKey,
+  DensityKey,
+  FontPackKey,
+  LanguageModeKey,
+  OrnamentKey,
+  PresetKey,
+  RenderDocument,
+  ThemeKey,
+} from './domain/types'
 import { canvasToBlob, downloadBlob, escapeHtml, sanitizeStem } from './export/png'
 import { buildRenderDocument } from './layout/compose'
 import { drawPageToCanvas } from './render/canvas'
@@ -273,8 +282,8 @@ function syncUi(): void {
   const page = doc.pages[st.currentPageIndex]
   if (page === undefined) return
   const copy = getUiCopy(st.uiLanguage)
-
   const pageCount = doc.pages.length
+
   dom.pageChip.textContent = st.uiLanguage === 'zh'
     ? `第 ${st.currentPageIndex + 1} / ${pageCount} 页`
     : `Page ${st.currentPageIndex + 1} / ${pageCount}`
@@ -285,7 +294,7 @@ function syncUi(): void {
   dom.previewHeading.textContent = copy.livePreview
   dom.previewSubheading.textContent = `${doc.theme.name} | ${st.uiLanguage === 'zh' ? `${doc.blockCount} 个内容块` : `${doc.blockCount} blocks`}`
   dom.previewMeta.textContent = st.uiLanguage === 'zh'
-    ? `${doc.preset.pageWidth} x ${Math.round(page.height)} | ${pageCount} 页`
+    ? `${doc.preset.pageWidth} × ${Math.round(page.height)} | ${pageCount} 页`
     : `${doc.preset.pageWidth} x ${Math.round(page.height)} | ${pageCount} pages`
 
   const summary = st.uiLanguage === 'zh'
@@ -293,7 +302,7 @@ function syncUi(): void {
         `内容块数：${doc.blockCount}`,
         `字符数：${doc.sourceLength}`,
         `页数：${pageCount}`,
-        `画布尺寸：${doc.preset.pageWidth} x ${Math.round(page.height)}`,
+        `画布尺寸：${doc.preset.pageWidth} × ${Math.round(page.height)}`,
         `网格：${doc.preset.columnCount} 栏${doc.preset.columnCount > 1 ? `，栏距 ${doc.preset.columnGap}px` : ''}`,
         st.presetKey === 'xiaohongshu' ? '模式：自动分页社交卡片' : '模式：单张长图',
         `字体包：${getFontPackLabel(st.fontPackKey)}`,
@@ -319,6 +328,7 @@ function syncUi(): void {
         `Images resolved: ${st.imageAssets.size} / ${countImageRefs(doc)}`,
         'Tip: imported images are matched by file name to Markdown image URLs.',
       ]
+
   dom.stats.innerHTML = summary.map(item => `<div>${escapeHtml(item)}</div>`).join('')
 }
 
@@ -327,8 +337,13 @@ function syncStaticUi(): void {
   setText('app-eyebrow', copy.appEyebrow)
   setText('app-title', copy.appTitle)
   setText('app-intro', copy.appIntro)
+  setText('mode-studio', copy.modeStudio)
+  setText('mode-source', copy.modeSource)
+  setText('mode-preview', copy.modePreview)
   setText('ui-language-label', copy.uiLanguageLabel)
   setText('content-title', copy.contentTitle)
+  setText('editor-heading', copy.editorHeading)
+  setText('editor-hint', copy.editorHint)
   setText('import-markdown-label', copy.importMarkdown)
   setText('import-images-label', copy.importImages)
   setText('file-name-label', copy.fileName)
@@ -343,6 +358,7 @@ function syncStaticUi(): void {
   setText('ornament-label', copy.ornament)
   setText('cover-label', copy.cover)
   setText('actions-title', copy.actionsTitle)
+  setText('stats-heading', copy.statsHeading)
   setText('waiting-copy', copy.waiting)
   dom.sampleButton.textContent = copy.loadSample
   dom.renderButton.textContent = copy.reflow

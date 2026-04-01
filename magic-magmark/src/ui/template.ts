@@ -4,6 +4,9 @@ type UiCopy = {
   appEyebrow: string
   appTitle: string
   appIntro: string
+  modeStudio: string
+  modeSource: string
+  modePreview: string
   uiLanguageLabel: string
   contentTitle: string
   importMarkdown: string
@@ -29,6 +32,9 @@ type UiCopy = {
   waiting: string
   livePreview: string
   previewSubheading: string
+  editorHeading: string
+  editorHint: string
+  statsHeading: string
   presetOptions: Record<'xiaohongshu' | 'long-image', string>
   themeOptions: Record<'berry' | 'ink' | 'forest', string>
   densityOptions: Record<'airy' | 'balanced' | 'compact', string>
@@ -40,37 +46,43 @@ type UiCopy = {
 
 const UI_COPY: Record<UiLanguageKey, UiCopy> = {
   zh: {
-    appEyebrow: 'MagicMagMark / 杂志感社交排版',
-    appTitle: '把 Markdown 变成可发布的杂志风海报',
-    appIntro: '只把当前仓库当作文字排版内核，在这里完成社交卡片、长图排版和高分辨率 PNG 导出。',
+    appEyebrow: 'MagicMagMark / Editorial Studio',
+    appTitle: 'MagMark 风格编辑台',
+    appIntro: '围绕 Pretext 排版内核，像编辑器一样组织内容、风格和导出。',
+    modeStudio: 'Studio',
+    modeSource: 'Markdown',
+    modePreview: 'Preview',
     uiLanguageLabel: '界面语言',
-    contentTitle: '内容',
-    importMarkdown: '导入 .md',
+    contentTitle: '内容与资源',
+    importMarkdown: '导入 Markdown',
     importImages: '导入图片',
-    loadSample: '加载示例',
+    loadSample: '载入示例',
     fileName: '文件名',
-    markdown: 'Markdown',
-    exportTitle: '输出设置',
+    markdown: 'Markdown 源文',
+    exportTitle: '版式与输出',
     preset: '预设',
     theme: '主题',
     fontPack: '字体包',
     languageMode: '排版语言',
     density: '密度',
     scale: '导出倍率',
-    ornament: '装饰风格',
-    cover: '封面模板',
-    actionsTitle: '操作',
+    ornament: '装饰',
+    cover: '封面',
+    actionsTitle: '导出操作',
     reflow: '重新排版',
-    exportCurrent: '导出当前 PNG',
-    exportAll: '导出全部页面',
+    exportCurrent: '导出当前页',
+    exportAll: '导出全部',
     previous: '上一页',
     next: '下一页',
-    waiting: '等待排版...',
-    livePreview: '实时预览',
-    previewSubheading: '由 Pretext 驱动的逐行排版与 Canvas 导出',
+    waiting: '等待生成排版结果…',
+    livePreview: '设备预览',
+    previewSubheading: '社交卡片与长图输出预览',
+    editorHeading: '编辑区域',
+    editorHint: '像 MagMark 一样，在左侧完成内容编辑和风格切换。',
+    statsHeading: '文档信息',
     presetOptions: {
-      xiaohongshu: '小红书 1080x1440',
-      'long-image': '长图 1080xAuto',
+      xiaohongshu: '小红书 1080×1440',
+      'long-image': '长图 1080×Auto',
     },
     themeOptions: {
       berry: '莓果刊物',
@@ -83,7 +95,7 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
       compact: '紧凑',
     },
     scaleOptions: {
-      '2': '2x 快速预览',
+      '2': '2x 预览',
       '3': '3x 标准',
       '4': '4x 高清',
     },
@@ -102,17 +114,20 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
     },
   },
   en: {
-    appEyebrow: 'MagicMagMark / Editorial Social Layout',
-    appTitle: 'Turn Markdown into publish-ready posters',
-    appIntro: 'Use the current repository only as the text layout core, then render social cards or long images and export high-resolution PNG files here.',
+    appEyebrow: 'MagicMagMark / Editorial Studio',
+    appTitle: 'MagMark-style editorial workspace',
+    appIntro: 'Use Pretext as the layout core while the app behaves like an editorial studio.',
+    modeStudio: 'Studio',
+    modeSource: 'Markdown',
+    modePreview: 'Preview',
     uiLanguageLabel: 'UI language',
-    contentTitle: 'Content',
-    importMarkdown: 'Import .md',
+    contentTitle: 'Content & assets',
+    importMarkdown: 'Import Markdown',
     importImages: 'Import images',
     loadSample: 'Load sample',
     fileName: 'File name',
-    markdown: 'Markdown',
-    exportTitle: 'Export',
+    markdown: 'Markdown source',
+    exportTitle: 'Layout & output',
     preset: 'Preset',
     theme: 'Theme',
     fontPack: 'Font pack',
@@ -121,18 +136,21 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
     scale: 'Scale',
     ornament: 'Ornament',
     cover: 'Cover',
-    actionsTitle: 'Actions',
+    actionsTitle: 'Export actions',
     reflow: 'Reflow',
-    exportCurrent: 'Export current PNG',
-    exportAll: 'Export all pages',
+    exportCurrent: 'Export current',
+    exportAll: 'Export all',
     previous: 'Previous',
     next: 'Next',
-    waiting: 'Waiting for layout...',
-    livePreview: 'Live preview',
-    previewSubheading: 'Pretext-driven line layout with Canvas export',
+    waiting: 'Waiting for layout output…',
+    livePreview: 'Device preview',
+    previewSubheading: 'Preview social cards and long-image output',
+    editorHeading: 'Editor',
+    editorHint: 'Work on content, controls, and output from the left studio panel.',
+    statsHeading: 'Document info',
     presetOptions: {
-      xiaohongshu: 'Xiaohongshu 1080x1440',
-      'long-image': 'Long image 1080xAuto',
+      xiaohongshu: 'Xiaohongshu 1080×1440',
+      'long-image': 'Long image 1080×Auto',
     },
     themeOptions: {
       berry: 'Berry Editorial',
@@ -145,9 +163,9 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
       compact: 'Compact',
     },
     scaleOptions: {
-      '2': '2x fast preview',
+      '2': '2x preview',
       '3': '3x standard',
-      '4': '4x high res',
+      '4': '4x high-res',
     },
     ornamentOptions: {
       editorial: 'Editorial',
@@ -167,17 +185,27 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
 
 export function renderAppShell(): string {
   return `
-    <main class="shell">
-      <section class="panel">
-        <header class="panel-head">
-          <p id="app-eyebrow" class="eyebrow"></p>
-          <h1 id="app-title"></h1>
-          <p id="app-intro" class="intro"></p>
-        </header>
+    <main class="workspace-shell">
+      <header class="workspace-topbar">
+        <div class="workspace-brand">
+          <p id="app-eyebrow" class="workspace-eyebrow"></p>
+          <div class="workspace-title-group">
+            <h1 id="app-title" class="workspace-title"></h1>
+            <p id="app-intro" class="workspace-intro"></p>
+          </div>
+        </div>
 
-        <div class="controls">
-          <section class="section">
-            <div class="inline-grid">
+        <div class="workspace-modebar">
+          <span id="mode-studio" class="mode-pill mode-pill-active"></span>
+          <span id="mode-source" class="mode-pill"></span>
+          <span id="mode-preview" class="mode-pill"></span>
+        </div>
+      </header>
+
+      <section class="workspace-main">
+        <aside class="studio-sidebar">
+          <section class="studio-card studio-card-compact">
+            <div class="studio-grid studio-grid-single">
               <label>
                 <span id="ui-language-label"></span>
                 <select id="ui-language-select">
@@ -188,32 +216,49 @@ export function renderAppShell(): string {
             </div>
           </section>
 
-          <section class="section">
-            <p id="content-title" class="section-title"></p>
-            <div class="button-row">
-              <label class="file-button secondary">
+          <section class="studio-card">
+            <div class="card-head">
+              <div>
+                <p id="content-title" class="card-kicker"></p>
+                <h2 id="editor-heading" class="card-title"></h2>
+              </div>
+              <p id="editor-hint" class="card-note"></p>
+            </div>
+
+            <div class="toolbar-row">
+              <label class="tool-button tool-button-soft">
                 <span id="import-markdown-label"></span>
                 <input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain">
               </label>
-              <label class="file-button secondary">
+              <label class="tool-button tool-button-soft">
                 <span id="import-images-label"></span>
                 <input id="image-files" type="file" accept="image/*" multiple>
               </label>
-              <button id="sample-button" class="secondary" type="button"></button>
+              <button id="sample-button" class="tool-button tool-button-soft" type="button"></button>
             </div>
-            <label>
-              <span id="file-name-label"></span>
-              <input id="document-name" type="text" value="magic-magmark">
-            </label>
-            <label>
+
+            <div class="studio-grid studio-grid-single">
+              <label>
+                <span id="file-name-label"></span>
+                <input id="document-name" type="text" value="magic-magmark">
+              </label>
+            </div>
+
+            <label class="editor-label">
               <span id="markdown-label"></span>
               <textarea id="markdown-input" spellcheck="false"></textarea>
             </label>
           </section>
 
-          <section class="section">
-            <p id="export-title" class="section-title"></p>
-            <div class="inline-grid">
+          <section class="studio-card">
+            <div class="card-head">
+              <div>
+                <p id="export-title" class="card-kicker"></p>
+                <h2 id="stats-heading" class="card-title"></h2>
+              </div>
+            </div>
+
+            <div class="studio-grid studio-grid-double">
               <label>
                 <span id="preset-label"></span>
                 <select id="preset-select">
@@ -279,39 +324,49 @@ export function renderAppShell(): string {
             </div>
           </section>
 
-          <section class="section">
-            <p id="actions-title" class="section-title"></p>
-            <div class="button-row">
-              <button id="render-button" type="button"></button>
-              <button id="export-current-button" type="button"></button>
-              <button id="export-all-button" class="secondary" type="button"></button>
+          <section class="studio-card studio-card-compact">
+            <div class="card-head">
+              <div>
+                <p id="actions-title" class="card-kicker"></p>
+              </div>
             </div>
-            <div class="pager">
-              <button id="prev-page-button" class="secondary" type="button"></button>
-              <button id="next-page-button" class="secondary" type="button"></button>
+
+            <div class="toolbar-row">
+              <button id="render-button" class="tool-button tool-button-primary" type="button"></button>
+              <button id="export-current-button" class="tool-button tool-button-soft" type="button"></button>
+              <button id="export-all-button" class="tool-button tool-button-soft" type="button"></button>
+            </div>
+
+            <div class="pager-row">
+              <button id="prev-page-button" class="tool-button tool-button-soft" type="button"></button>
               <span id="page-chip" class="page-chip"></span>
+              <button id="next-page-button" class="tool-button tool-button-soft" type="button"></button>
+            </div>
+
+            <div class="stats-card" id="stats">
+              <div id="waiting-copy"></div>
             </div>
           </section>
+        </aside>
 
-          <section class="meta" id="stats">
-            <div id="waiting-copy"></div>
-          </section>
-        </div>
-      </section>
+        <section class="preview-stage">
+          <header class="preview-stage-head">
+            <div class="preview-stage-title">
+              <strong id="preview-heading"></strong>
+              <span id="preview-subheading"></span>
+            </div>
+            <div id="preview-meta" class="preview-meta">1080 × 1440</div>
+          </header>
 
-      <section class="preview">
-        <header class="preview-head">
-          <div class="preview-title">
-            <strong id="preview-heading"></strong>
-            <span id="preview-subheading"></span>
+          <div class="preview-stage-body">
+            <div class="device-frame">
+              <div class="device-notch"></div>
+              <div class="canvas-wrap">
+                <canvas id="preview-canvas"></canvas>
+              </div>
+            </div>
           </div>
-          <div id="preview-meta" class="preview-meta">1080 x 1440</div>
-        </header>
-        <div class="preview-body">
-          <div class="canvas-wrap">
-            <canvas id="preview-canvas"></canvas>
-          </div>
-        </div>
+        </section>
       </section>
     </main>
   `
