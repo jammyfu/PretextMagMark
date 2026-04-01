@@ -189,5 +189,6 @@ export type TextInlineItem = {
   fullWidth: number
   leadingGap: number
   stretchableGapBefore: boolean
+  keepWholeIfPossible: boolean
   chromeWidth: number
 }

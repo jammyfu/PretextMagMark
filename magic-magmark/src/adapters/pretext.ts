@@ -59,17 +59,21 @@ export function layoutStyledSpans(
       if (cursor === null) {
         const fullWidth = leadingGap + item.fullWidth + item.chromeWidth
         if (fullWidth <= remainingWidth) {
-      fragments.push({
-        styleName: item.styleName,
-        text: item.fullText,
-        width: item.fullWidth,
-        leadingGap,
-        stretchableBefore: item.leadingGap > 0 ? item.stretchableGapBefore : undefined,
-      })
+          fragments.push({
+            styleName: item.styleName,
+            text: item.fullText,
+            width: item.fullWidth,
+            leadingGap,
+            stretchableBefore: item.leadingGap > 0 ? item.stretchableGapBefore : undefined,
+          })
           lineWidth += fullWidth
           remainingWidth = Math.max(0, safeWidth - lineWidth)
           itemIndex++
           continue
+        }
+
+        if (fragments.length > 0 && item.keepWholeIfPossible && item.fullWidth + item.chromeWidth <= safeWidth) {
+          break lineLoop
         }
       }
 
@@ -153,6 +157,7 @@ function createInlineItems(spans: InlineSpan[], baseStyleName: InlineStyleName, 
         fullWidth: fullLine.width,
         leadingGap: items.length === 0 ? 0 : carryGap,
         stretchableGapBefore: items.length > 0 && token.stretchableBefore,
+        keepWholeIfPossible: token.keepWholeIfPossible,
         chromeWidth: style.inlinePaddingX * 2,
       })
       carryGap = 0
@@ -191,12 +196,12 @@ function cursorsMatch(a: LayoutCursor, b: LayoutCursor): boolean {
   return a.segmentIndex === b.segmentIndex && a.graphemeIndex === b.graphemeIndex
 }
 
-function tokenizeSpanText(text: string): Array<{ kind: 'space' } | { kind: 'text', text: string, stretchableBefore: boolean }> {
+function tokenizeSpanText(text: string): Array<{ kind: 'space' } | { kind: 'text', text: string, stretchableBefore: boolean, keepWholeIfPossible: boolean }> {
   const trimmed = text.trim()
   if (trimmed.length === 0) return []
 
   const parts = text.split(/(\s+)/).filter(part => part.length > 0)
-  const tokens: Array<{ kind: 'space' } | { kind: 'text', text: string, stretchableBefore: boolean }> = []
+  const tokens: Array<{ kind: 'space' } | { kind: 'text', text: string, stretchableBefore: boolean, keepWholeIfPossible: boolean }> = []
 
   for (let index = 0; index < parts.length; index++) {
     const part = parts[index]!
@@ -213,6 +218,7 @@ function tokenizeSpanText(text: string): Array<{ kind: 'space' } | { kind: 'text
           kind: 'text',
           text: grapheme,
           stretchableBefore: graphemeIndex > 0,
+          keepWholeIfPossible: false,
         })
       }
       continue
@@ -222,6 +228,7 @@ function tokenizeSpanText(text: string): Array<{ kind: 'space' } | { kind: 'text
       kind: 'text',
       text: part,
       stretchableBefore: tokens.length > 0,
+      keepWholeIfPossible: shouldKeepWholeToken(part),
     })
   }
 
@@ -231,6 +238,13 @@ function tokenizeSpanText(text: string): Array<{ kind: 'space' } | { kind: 'text
 function shouldSegmentForIdeographicJustification(text: string): boolean {
   if (currentLanguageMode === 'en') return false
   return !/\s/.test(text) && /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(text)
+}
+
+function shouldKeepWholeToken(text: string): boolean {
+  if (!/[A-Za-z]/.test(text)) return false
+  if (/[/:@?=#&_~]/.test(text)) return false
+  if (text.length <= 1) return false
+  return /^[A-Za-z]+(?:['’-][A-Za-z]+)*[.,;:!?)]*$/.test(text)
 }
 
 function resolveLocale(languageMode: LanguageModeKey): string | undefined {
