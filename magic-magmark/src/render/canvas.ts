@@ -74,6 +74,15 @@ function drawPage(
 
   for (let index = 0; index < page.rows.length; index++) {
     const row = page.rows[index]!
+    if (row.kind === 'text' && (row.tone === 'quote' || row.tone === 'pull-quote')) {
+      const previous = page.rows[index - 1]
+      const isBlockStart = previous?.kind !== 'text' || previous.tone !== row.tone
+      if (isBlockStart) drawToneBlock(ctx, page.rows, index, doc)
+    }
+  }
+
+  for (let index = 0; index < page.rows.length; index++) {
+    const row = page.rows[index]!
     if (row.kind === 'text') drawTextRow(ctx, row, doc)
     if (row.kind === 'divider') drawDividerRow(ctx, row, doc)
     if (row.kind === 'image') drawImageRow(ctx, row, doc, imageAssets)
@@ -230,34 +239,6 @@ function drawTextRow(ctx: CanvasRenderingContext2D, row: TextRow, doc: RenderDoc
   const { theme, preset } = doc
   const firstStyleName = row.fragments[0]?.styleName
 
-  if (row.tone === 'quote') {
-    ctx.fillStyle = theme.accentFaint
-    roundRect(ctx, preset.marginX - 4, row.y - 16, preset.contentWidth + 8, row.height + 22, 22)
-    ctx.fill()
-    ctx.fillStyle = theme.accent
-    roundRect(ctx, preset.marginX - 18, row.y - 16, 8, row.height + 22, 6)
-    ctx.fill()
-    if (row.prefix === undefined) {
-      ctx.fillStyle = theme.accent
-      ctx.font = `700 54px "Iowan Old Style", Georgia, serif`
-      ctx.fillText('"', preset.marginX + 10, row.y + row.height * 0.72)
-    }
-  }
-
-  if (row.tone === 'pull-quote') {
-    ctx.fillStyle = theme.accentFaint
-    roundRect(ctx, preset.marginX + 34, row.y - 22, preset.contentWidth - 68, row.height + 34, 28)
-    ctx.fill()
-    ctx.fillStyle = theme.accentSoft
-    roundRect(ctx, preset.marginX + 54, row.y - 12, 120, 6, 4)
-    ctx.fill()
-    if (row.prefix === undefined) {
-      ctx.fillStyle = theme.accent
-      ctx.font = `700 64px "Iowan Old Style", Georgia, serif`
-      ctx.fillText('"', row.x - 40, row.y + row.height * 0.8)
-    }
-  }
-
   if (row.tone === 'code') {
     ctx.fillStyle = '#f2ede7'
     roundRect(ctx, preset.marginX - 2, row.y - 6, preset.contentWidth + 4, row.height + 8, 18)
@@ -320,6 +301,61 @@ function drawTextRow(ctx: CanvasRenderingContext2D, row: TextRow, doc: RenderDoc
     ctx.lineTo(row.x + 72, row.y - 12)
     ctx.stroke()
   }
+}
+
+function drawToneBlock(
+  ctx: CanvasRenderingContext2D,
+  rows: PageLayout['rows'],
+  startIndex: number,
+  doc: RenderDocument,
+): void {
+  const startRow = rows[startIndex]
+  if (startRow?.kind !== 'text' || (startRow.tone !== 'quote' && startRow.tone !== 'pull-quote')) return
+
+  let endIndex = startIndex
+  while (endIndex + 1 < rows.length) {
+    const next = rows[endIndex + 1]
+    if (next?.kind !== 'text' || next.tone !== startRow.tone) break
+    endIndex++
+  }
+
+  const endRow = rows[endIndex]
+  if (endRow?.kind !== 'text') return
+
+  const { theme, preset } = doc
+  const top = startRow.y
+  const bottom = endRow.y + endRow.height
+
+  if (startRow.tone === 'quote') {
+    const y = top - 16
+    const height = bottom - top + 22
+    ctx.fillStyle = theme.accentFaint
+    roundRect(ctx, preset.marginX - 4, y, preset.contentWidth + 8, height, 22)
+    ctx.fill()
+
+    ctx.fillStyle = theme.accent
+    roundRect(ctx, preset.marginX - 18, y, 8, height, 6)
+    ctx.fill()
+
+    ctx.fillStyle = theme.accent
+    ctx.font = `700 54px "Iowan Old Style", Georgia, serif`
+    ctx.fillText('"', preset.marginX + 10, startRow.y + startRow.height * 0.72)
+    return
+  }
+
+  const y = top - 22
+  const height = bottom - top + 34
+  ctx.fillStyle = theme.accentFaint
+  roundRect(ctx, preset.marginX + 34, y, preset.contentWidth - 68, height, 28)
+  ctx.fill()
+
+  ctx.fillStyle = theme.accentSoft
+  roundRect(ctx, preset.marginX + 54, top - 12, 120, 6, 4)
+  ctx.fill()
+
+  ctx.fillStyle = theme.accent
+  ctx.font = `700 64px "Iowan Old Style", Georgia, serif`
+  ctx.fillText('"', startRow.x - 40, startRow.y + startRow.height * 0.8)
 }
 
 function drawDividerRow(ctx: CanvasRenderingContext2D, row: { y: number }, doc: RenderDocument): void {
