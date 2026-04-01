@@ -86,6 +86,7 @@ export type TextFragment = {
   styleName: InlineStyleName
   width: number
   leadingGap: number
+  stretchableBefore?: boolean
 }
 
 export type TextRow = {
@@ -94,6 +95,8 @@ export type TextRow = {
   height: number
   x: number
   lineWidth?: number
+  targetWidth?: number
+  justifySlots?: number
   prefix?: {
     text: string
     styleName: InlineStyleName
@@ -155,6 +158,7 @@ export type PreparedLineFragment = {
   text: string
   width: number
   leadingGap: number
+  stretchableBefore?: boolean
 }
 
 export type PreparedLine = {
@@ -168,5 +172,6 @@ export type TextInlineItem = {
   fullText: string
   fullWidth: number
   leadingGap: number
+  stretchableGapBefore: boolean
   chromeWidth: number
 }

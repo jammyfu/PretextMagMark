@@ -12,6 +12,7 @@ import type {
 
 const preparedCache = new Map<string, PreparedTextWithSegments>()
 const collapsedSpaceWidthCache = new Map<string, number>()
+const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
 
 export function layoutStyledSpans(
   spans: InlineSpan[],
@@ -48,12 +49,13 @@ export function layoutStyledSpans(
       if (cursor === null) {
         const fullWidth = leadingGap + item.fullWidth + item.chromeWidth
         if (fullWidth <= remainingWidth) {
-          fragments.push({
-            styleName: item.styleName,
-            text: item.fullText,
-            width: item.fullWidth,
-            leadingGap,
-          })
+      fragments.push({
+        styleName: item.styleName,
+        text: item.fullText,
+        width: item.fullWidth,
+        leadingGap,
+        stretchableBefore: item.leadingGap > 0 ? item.stretchableGapBefore : undefined,
+      })
           lineWidth += fullWidth
           remainingWidth = Math.max(0, safeWidth - lineWidth)
           itemIndex++
@@ -74,6 +76,7 @@ export function layoutStyledSpans(
         text: line.text,
         width: line.width,
         leadingGap,
+        stretchableBefore: item.leadingGap > 0 ? item.stretchableGapBefore : undefined,
       })
       lineWidth += leadingGap + line.width + item.chromeWidth
       remainingWidth = Math.max(0, safeWidth - lineWidth)
@@ -119,26 +122,32 @@ function createInlineItems(spans: InlineSpan[], baseStyleName: InlineStyleName, 
     const styleName = resolveStyleName(baseStyleName, span.style)
     const style = theme.styles[styleName]
     const gapWidth = measureCollapsedSpaceWidth(style.font)
-    const hasLeadingWhitespace = /^\s/.test(span.text)
-    const hasTrailingWhitespace = /\s$/.test(span.text)
-    const trimmedText = span.text.trim()
-    const leadingGap = items.length === 0 ? 0 : hasLeadingWhitespace || pendingGap > 0 ? gapWidth : 0
-    pendingGap = hasTrailingWhitespace ? gapWidth : 0
-    if (trimmedText.length === 0) continue
+    const tokens = tokenizeSpanText(span.text)
+    let carryGap = pendingGap
+    for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+      const token = tokens[tokenIndex]!
+      if (token.kind === 'space') {
+        carryGap = gapWidth
+        continue
+      }
 
-    const prepared = getPrepared(trimmedText, style.font)
-    const fullLine = layoutNextLine(prepared, { segmentIndex: 0, graphemeIndex: 0 }, 100_000)
-    if (fullLine === null) continue
+      const prepared = getPrepared(token.text, style.font)
+      const fullLine = layoutNextLine(prepared, { segmentIndex: 0, graphemeIndex: 0 }, 100_000)
+      if (fullLine === null) continue
 
-    items.push({
-      styleName,
-      prepared,
-      endCursor: fullLine.end,
-      fullText: fullLine.text,
-      fullWidth: fullLine.width,
-      leadingGap,
-      chromeWidth: style.inlinePaddingX * 2,
-    })
+      items.push({
+        styleName,
+        prepared,
+        endCursor: fullLine.end,
+        fullText: fullLine.text,
+        fullWidth: fullLine.width,
+        leadingGap: items.length === 0 ? 0 : carryGap,
+        stretchableGapBefore: items.length > 0 && token.stretchableBefore,
+        chromeWidth: style.inlinePaddingX * 2,
+      })
+      carryGap = 0
+    }
+    pendingGap = carryGap
   }
 
   return items
@@ -170,4 +179,45 @@ function getPrepared(text: string, font: string): PreparedTextWithSegments {
 
 function cursorsMatch(a: LayoutCursor, b: LayoutCursor): boolean {
   return a.segmentIndex === b.segmentIndex && a.graphemeIndex === b.graphemeIndex
+}
+
+function tokenizeSpanText(text: string): Array<{ kind: 'space' } | { kind: 'text', text: string, stretchableBefore: boolean }> {
+  const trimmed = text.trim()
+  if (trimmed.length === 0) return []
+
+  const parts = text.split(/(\s+)/).filter(part => part.length > 0)
+  const tokens: Array<{ kind: 'space' } | { kind: 'text', text: string, stretchableBefore: boolean }> = []
+
+  for (let index = 0; index < parts.length; index++) {
+    const part = parts[index]!
+    if (/^\s+$/.test(part)) {
+      tokens.push({ kind: 'space' })
+      continue
+    }
+
+    if (shouldSegmentForIdeographicJustification(part)) {
+      const graphemes = [...graphemeSegmenter.segment(part)].map(item => item.segment)
+      for (let graphemeIndex = 0; graphemeIndex < graphemes.length; graphemeIndex++) {
+        const grapheme = graphemes[graphemeIndex]!
+        tokens.push({
+          kind: 'text',
+          text: grapheme,
+          stretchableBefore: graphemeIndex > 0,
+        })
+      }
+      continue
+    }
+
+    tokens.push({
+      kind: 'text',
+      text: part,
+      stretchableBefore: tokens.length > 0,
+    })
+  }
+
+  return tokens
+}
+
+function shouldSegmentForIdeographicJustification(text: string): boolean {
+  return !/\s/.test(text) && /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(text)
 }

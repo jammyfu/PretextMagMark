@@ -113,6 +113,7 @@ function layoutBlock(
       const lines = layoutStyledSpans(block.spans, styleName, maxWidth, theme)
       const firstLineIndent = isLead ? theme.rhythm.leadIndent : theme.rhythm.paragraphIndent
       const rows = createTextRows(lines, x, startY, theme, styleName, undefined, undefined, firstLineIndent)
+      if (!isLead) applyJustification(rows, maxWidth)
       const endY = rows.length === 0 ? startY : rows[rows.length - 1]!.y + rows[rows.length - 1]!.height
       return { rows, nextY: endY + (isLead ? theme.rhythm.sectionGap : theme.rhythm.compactGap) }
     }
@@ -150,6 +151,7 @@ function layoutBlock(
           'body',
           { text: prefixText, width: prefixWidth, styleName: 'list-prefix' },
         )
+        applyJustification(itemRows, maxWidth - indent)
         rows.push(...itemRows)
         y = itemRows.length === 0 ? y + theme.rhythm.compactGap : itemRows[itemRows.length - 1]!.y + itemRows[itemRows.length - 1]!.height + 8
       }
@@ -489,6 +491,19 @@ function createTextRows(
   return rows
 }
 
+function applyJustification(rows: TextRow[], targetWidth: number): void {
+  if (rows.length <= 1) return
+  for (let index = 0; index < rows.length - 1; index++) {
+    const row = rows[index]!
+    const slots = row.fragments.reduce((count, fragment) => count + (fragment.stretchableBefore ? 1 : 0), 0)
+    if (slots === 0 || row.lineWidth === undefined) continue
+    const fillRatio = row.lineWidth / targetWidth
+    if (fillRatio < 0.68) continue
+    row.targetWidth = targetWidth
+    row.justifySlots = slots
+  }
+}
+
 function computeDocumentHeight(rows: RenderRow[]): number {
   let max = 0
   for (let index = 0; index < rows.length; index++) {
@@ -524,6 +539,8 @@ function cloneRow(row: RenderRow): RenderRow {
         y: row.y,
         height: row.height,
         lineWidth: row.lineWidth,
+        targetWidth: row.targetWidth,
+        justifySlots: row.justifySlots,
         prefix: row.prefix === undefined ? undefined : { ...row.prefix },
         fragments: row.fragments.map(fragment => ({ ...fragment })),
         tone: row.tone,
@@ -538,6 +555,8 @@ function cloneTextRow(row: TextRow): TextRow {
     y: row.y,
     height: row.height,
     lineWidth: row.lineWidth,
+    targetWidth: row.targetWidth,
+    justifySlots: row.justifySlots,
     prefix: row.prefix === undefined ? undefined : { ...row.prefix },
     fragments: row.fragments.map(fragment => ({ ...fragment })),
     tone: row.tone,

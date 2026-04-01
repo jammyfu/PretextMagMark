@@ -265,6 +265,9 @@ function drawTextRow(ctx: CanvasRenderingContext2D, row: TextRow, doc: RenderDoc
   }
 
   let cursorX = row.x
+  const justifyExtra = row.targetWidth !== undefined && row.justifySlots !== undefined && row.justifySlots > 0 && row.lineWidth !== undefined
+    ? Math.max(0, (row.targetWidth - row.lineWidth) / row.justifySlots)
+    : 0
   if (row.prefix !== undefined) {
     const styleSpec = theme.styles[row.prefix.styleName]
     ctx.font = styleSpec.font
@@ -277,6 +280,7 @@ function drawTextRow(ctx: CanvasRenderingContext2D, row: TextRow, doc: RenderDoc
     const fragment = row.fragments[index]!
     const styleSpec = theme.styles[fragment.styleName]
     cursorX += fragment.leadingGap
+    if (fragment.stretchableBefore) cursorX += justifyExtra
 
     if (styleSpec.inlineBackground !== undefined) {
       ctx.fillStyle = styleSpec.inlineBackground
