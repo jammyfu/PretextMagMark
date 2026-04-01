@@ -25,4 +25,12 @@ After that, the page needs a stable reading rhythm. Narrower measures, controlle
 ### Why it matters
 
 When text blocks all share the same visual weight, the layout feels like a demo.
-When each layer has a purpose, the page begins to feel published.`
+When each layer has a purpose, the page begins to feel published.
+
+When subheads, lists, and body copy start to negotiate real column widths, the composition becomes more disciplined. Readers can scan, pause, and re-enter without losing the thread.
+
+- narrower measures slow the eye just enough
+- stronger hierarchy creates editorial confidence
+- a two-column flow makes supporting details easier to stage
+
+> The page should feel guided, not crowded.`

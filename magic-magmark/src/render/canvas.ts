@@ -60,6 +60,10 @@ function drawPage(
   ctx.fillText(doc.preset.label, width - preset.marginX, 82)
   ctx.textAlign = 'left'
 
+  if (preset.columnCount > 1) {
+    drawColumnGuides(ctx, doc)
+  }
+
   for (let index = 0; index < page.rows.length; index++) {
     const row = page.rows[index]!
     if (row.kind === 'text') drawTextRow(ctx, row, doc)
@@ -179,6 +183,23 @@ function drawDividerRow(ctx: CanvasRenderingContext2D, row: { y: number }, doc: 
   ctx.beginPath()
   ctx.arc(centerX, row.y + 16, 4, 0, Math.PI * 2)
   ctx.fill()
+}
+
+function drawColumnGuides(ctx: CanvasRenderingContext2D, doc: RenderDocument): void {
+  const { preset, theme } = doc
+  const totalGap = preset.columnGap * Math.max(0, preset.columnCount - 1)
+  const columnWidth = (preset.contentWidth - totalGap) / preset.columnCount
+  for (let index = 1; index < preset.columnCount; index++) {
+    const centerX = preset.marginX + index * columnWidth + (index - 0.5) * preset.columnGap
+    ctx.strokeStyle = theme.rule
+    ctx.lineWidth = 1
+    ctx.setLineDash([8, 10])
+    ctx.beginPath()
+    ctx.moveTo(centerX, 122)
+    ctx.lineTo(centerX, 180)
+    ctx.stroke()
+    ctx.setLineDash([])
+  }
 }
 
 function drawImageRow(ctx: CanvasRenderingContext2D, row: ImageRow, doc: RenderDocument): void {

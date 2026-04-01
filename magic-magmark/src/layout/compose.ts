@@ -23,13 +23,9 @@ export function buildRenderDocument(source: string, presetKey: PresetKey, themeK
   const preset = getPreset(presetKey)
   const theme = getTheme(themeKey)
   const blocks = parseMarkdown(source)
-  const rows = layoutBlocks(blocks, preset, theme)
   const pages = preset.pageHeight === null
-    ? [{
-        rows: rows.filter(row => row.kind !== 'page-break').map(cloneRow),
-        height: Math.max(rows.length === 0 ? 960 : computeDocumentHeight(rows) + preset.bottomInset, 960),
-      }]
-    : paginateRows(rows, preset)
+    ? buildLongImagePages(blocks, preset, theme)
+    : composePagedLayout(blocks, preset, theme)
 
   return {
     preset,
@@ -38,6 +34,14 @@ export function buildRenderDocument(source: string, presetKey: PresetKey, themeK
     blockCount: blocks.length,
     sourceLength: source.length,
   }
+}
+
+function buildLongImagePages(blocks: MarkdownBlock[], preset: Preset, theme: Theme): PageLayout[] {
+  const rows = layoutBlocks(blocks, preset, theme)
+  return [{
+    rows: rows.filter(row => row.kind !== 'page-break').map(cloneRow),
+    height: Math.max(rows.length === 0 ? 960 : computeDocumentHeight(rows) + preset.bottomInset, 960),
+  }]
 }
 
 function layoutBlocks(blocks: MarkdownBlock[], preset: Preset, theme: Theme): RenderRow[] {
@@ -154,6 +158,130 @@ function layoutBlock(
   }
 }
 
+function composePagedLayout(blocks: MarkdownBlock[], preset: Preset, theme: Theme): PageLayout[] {
+  const pageHeight = preset.pageHeight
+  if (pageHeight === null) return []
+
+  const pages: PageLayout[] = []
+  let currentRows: RenderRow[] = []
+  let previous: MarkdownBlock | null = null
+  let currentColumn = 0
+  let columnTop = preset.topInset
+  let columnBottoms = createColumnBottoms(preset, preset.topInset)
+
+  for (let index = 0; index < blocks.length; index++) {
+    const block = blocks[index]!
+
+    if (block.kind === 'page-break') {
+      pushPage(pages, currentRows, pageHeight)
+      currentRows = []
+      currentColumn = 0
+      columnTop = preset.topInset
+      columnBottoms = createColumnBottoms(preset, preset.topInset)
+      continue
+    }
+
+    const placement = getBlockPlacement(block, previous)
+
+    if (placement === 'full-width') {
+      while (true) {
+        const startY = Math.max(...columnBottoms)
+        const placed = layoutBlock(block, preset.marginX, preset.contentWidth, startY, theme, { previous })
+        if (fitsOnPage(placed.nextY, preset) || currentRows.length === 0) {
+          currentRows.push(...placed.rows)
+          columnTop = placed.nextY
+          columnBottoms = createColumnBottoms(preset, columnTop)
+          currentColumn = 0
+          break
+        }
+
+        pushPage(pages, currentRows, pageHeight)
+        currentRows = []
+        currentColumn = 0
+        columnTop = preset.topInset
+        columnBottoms = createColumnBottoms(preset, preset.topInset)
+      }
+    } else {
+      const columnWidth = getColumnWidth(preset)
+      while (true) {
+        const x = getColumnX(preset, currentColumn)
+        const startY = Math.max(columnTop, columnBottoms[currentColumn]!)
+        const placed = layoutBlock(block, x, columnWidth, startY, theme, { previous })
+        if (fitsOnPage(placed.nextY, preset) || currentRows.length === 0) {
+          currentRows.push(...placed.rows)
+          columnBottoms[currentColumn] = placed.nextY
+          break
+        }
+
+        if (currentColumn < preset.columnCount - 1) {
+          currentColumn++
+          columnBottoms[currentColumn] = Math.max(columnBottoms[currentColumn]!, columnTop)
+          continue
+        }
+
+        pushPage(pages, currentRows, pageHeight)
+        currentRows = []
+        currentColumn = 0
+        columnTop = preset.topInset
+        columnBottoms = createColumnBottoms(preset, preset.topInset)
+      }
+    }
+
+    previous = block
+  }
+
+  if (currentRows.length > 0 || pages.length === 0) {
+    pushPage(pages, currentRows, pageHeight)
+  }
+
+  return pages
+}
+
+function getBlockPlacement(block: MarkdownBlock, previous: MarkdownBlock | null): 'full-width' | 'column' {
+  switch (block.kind) {
+    case 'heading':
+      return block.depth <= 2 ? 'full-width' : 'column'
+    case 'paragraph':
+      if (previous === null || previous.kind === 'heading' || previous.kind === 'divider') return 'full-width'
+      return 'column'
+    case 'list':
+      return 'column'
+    case 'blockquote':
+    case 'pull-quote':
+    case 'code':
+    case 'divider':
+    case 'image':
+      return 'full-width'
+    case 'page-break':
+      return 'full-width'
+  }
+}
+
+function createColumnBottoms(preset: Preset, initialY: number): number[] {
+  return Array.from({ length: preset.columnCount }, () => initialY)
+}
+
+function getColumnWidth(preset: Preset): number {
+  const totalGap = preset.columnGap * Math.max(0, preset.columnCount - 1)
+  return (preset.contentWidth - totalGap) / preset.columnCount
+}
+
+function getColumnX(preset: Preset, columnIndex: number): number {
+  return preset.marginX + columnIndex * (getColumnWidth(preset) + preset.columnGap)
+}
+
+function fitsOnPage(nextY: number, preset: Preset): boolean {
+  const pageHeight = preset.pageHeight
+  return pageHeight === null || nextY <= pageHeight - preset.bottomInset
+}
+
+function pushPage(pages: PageLayout[], rows: RenderRow[], height: number): void {
+  pages.push({
+    rows: rows.map(cloneRow),
+    height,
+  })
+}
+
 function createTextRows(
   lines: PreparedLine[],
   x: number,
@@ -183,55 +311,6 @@ function createTextRows(
     })
   }
   return rows
-}
-
-function paginateRows(rows: RenderRow[], preset: Preset): PageLayout[] {
-  const pageHeight = preset.pageHeight
-  if (pageHeight === null) return []
-
-  const pages: PageLayout[] = []
-  let currentRows: RenderRow[] = []
-  let pageStartY = preset.topInset
-
-  for (let index = 0; index < rows.length; index++) {
-    const row = rows[index]!
-
-    if (row.kind === 'page-break') {
-      if (currentRows.length > 0) {
-        pages.push({ rows: shiftRows(currentRows, pageStartY - preset.topInset), height: pageHeight })
-      } else {
-        pages.push({ rows: [], height: pageHeight })
-      }
-      currentRows = []
-      pageStartY = row.y
-      continue
-    }
-
-    const prospectiveBottom = row.y - pageStartY + row.height + preset.topInset
-    if (prospectiveBottom > pageHeight - preset.bottomInset && currentRows.length > 0) {
-      pages.push({ rows: shiftRows(currentRows, pageStartY - preset.topInset), height: pageHeight })
-      currentRows = []
-      pageStartY = row.y
-    }
-    currentRows.push(row)
-  }
-
-  if (currentRows.length > 0) {
-    pages.push({ rows: shiftRows(currentRows, pageStartY - preset.topInset), height: pageHeight })
-  }
-
-  if (pages.length === 0) pages.push({ rows: [], height: pageHeight })
-  return pages
-}
-
-function shiftRows(rows: RenderRow[], delta: number): RenderRow[] {
-  return rows.map(row => {
-    const cloned = cloneRow(row)
-    if (cloned.kind !== 'page-break') {
-      cloned.y -= delta
-    }
-    return cloned
-  })
 }
 
 function computeDocumentHeight(rows: RenderRow[]): number {

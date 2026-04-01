@@ -75,6 +75,8 @@ export type Preset = {
   topInset: number
   bottomInset: number
   contentWidth: number
+  columnCount: number
+  columnGap: number
 }
 
 export type TextFragment = {

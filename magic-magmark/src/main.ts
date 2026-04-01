@@ -198,6 +198,7 @@ function syncUi(): void {
     `Characters: ${doc.sourceLength}`,
     `Pages: ${pageCount}`,
     `Canvas size: ${doc.preset.pageWidth} x ${Math.round(page.height)}`,
+    `Grid: ${doc.preset.columnCount} column${doc.preset.columnCount > 1 ? 's' : ''}${doc.preset.columnCount > 1 ? `, ${doc.preset.columnGap}px gap` : ''}`,
     st.presetKey === 'xiaohongshu' ? 'Mode: auto-paginated social cards' : 'Mode: single long image',
     `Export scale: ${st.scale}x`,
     'Note: Markdown images currently render as placeholders so layout and export can be verified first.',

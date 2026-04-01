@@ -15,6 +15,8 @@ const PRESETS: Record<PresetKey, Preset> = {
     topInset: 120,
     bottomInset: 110,
     contentWidth: 1080 - 176,
+    columnCount: 2,
+    columnGap: 44,
   },
   'long-image': {
     label: 'Long image 1080xAuto',
@@ -24,6 +26,8 @@ const PRESETS: Record<PresetKey, Preset> = {
     topInset: 120,
     bottomInset: 120,
     contentWidth: 1080 - 184,
+    columnCount: 1,
+    columnGap: 0,
   },
 }
 
