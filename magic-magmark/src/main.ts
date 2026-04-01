@@ -1,7 +1,7 @@
 import './styles.css'
 import { countImageRefs, releaseImageAssets, resolveImageAssets } from './assets/images'
 import { SAMPLE_MARKDOWN } from './content/sample'
-import type { OrnamentKey, PresetKey, RenderDocument, ThemeKey } from './domain/types'
+import type { CoverTemplateKey, OrnamentKey, PresetKey, RenderDocument, ThemeKey } from './domain/types'
 import { canvasToBlob, downloadBlob, escapeHtml, sanitizeStem } from './export/png'
 import { buildRenderDocument } from './layout/compose'
 import { drawPageToCanvas } from './render/canvas'
@@ -17,6 +17,7 @@ type DomCache = {
   themeSelect: HTMLSelectElement
   scaleSelect: HTMLSelectElement
   ornamentSelect: HTMLSelectElement
+  coverTemplateSelect: HTMLSelectElement
   renderButton: HTMLButtonElement
   exportCurrentButton: HTMLButtonElement
   exportAllButton: HTMLButtonElement
@@ -36,6 +37,7 @@ type State = {
   presetKey: PresetKey
   themeKey: ThemeKey
   ornament: OrnamentKey
+  coverTemplate: CoverTemplateKey
   scale: number
   currentPageIndex: number
   document: RenderDocument | null
@@ -57,6 +59,7 @@ const st: State = {
   presetKey: 'xiaohongshu',
   themeKey: 'berry',
   ornament: 'editorial',
+  coverTemplate: 'portrait',
   scale: 3,
   currentPageIndex: 0,
   document: null,
@@ -81,6 +84,7 @@ function getDom(): DomCache {
     themeSelect: getRequiredElement('theme-select', HTMLSelectElement),
     scaleSelect: getRequiredElement('scale-select', HTMLSelectElement),
     ornamentSelect: getRequiredElement('ornament-select', HTMLSelectElement),
+    coverTemplateSelect: getRequiredElement('cover-template-select', HTMLSelectElement),
     renderButton: getRequiredElement('render-button', HTMLButtonElement),
     exportCurrentButton: getRequiredElement('export-current-button', HTMLButtonElement),
     exportAllButton: getRequiredElement('export-all-button', HTMLButtonElement),
@@ -139,6 +143,11 @@ function wireEvents(): void {
     void renderFromState()
   })
 
+  dom.coverTemplateSelect.addEventListener('change', () => {
+    st.coverTemplate = dom.coverTemplateSelect.value as CoverTemplateKey
+    void renderFromState()
+  })
+
   dom.scaleSelect.addEventListener('change', () => {
     st.scale = Number.parseInt(dom.scaleSelect.value, 10)
   })
@@ -188,7 +197,7 @@ async function renderFromState(): Promise<void> {
   const renderToken = ++st.renderToken
   st.source = dom.markdownInput.value
   st.fileStem = sanitizeStem(dom.documentName.value)
-  st.document = buildRenderDocument(st.source, st.presetKey, st.themeKey)
+  st.document = buildRenderDocument(st.source, st.presetKey, st.themeKey, st.coverTemplate)
   st.currentPageIndex = Math.min(st.currentPageIndex, st.document.pages.length - 1)
   releaseImageAssets(st.imageAssets)
   st.imageAssets = new Map()
@@ -229,6 +238,7 @@ function syncUi(): void {
     `Canvas size: ${doc.preset.pageWidth} x ${Math.round(page.height)}`,
     `Grid: ${doc.preset.columnCount} column${doc.preset.columnCount > 1 ? 's' : ''}${doc.preset.columnCount > 1 ? `, ${doc.preset.columnGap}px gap` : ''}`,
     st.presetKey === 'xiaohongshu' ? 'Mode: auto-paginated social cards' : 'Mode: single long image',
+    `Cover template: ${st.coverTemplate}`,
     `Export scale: ${st.scale}x`,
     `Images resolved: ${st.imageAssets.size} / ${countImageRefs(doc)}`,
     'Tip: imported images are matched by file name to Markdown image URLs.',

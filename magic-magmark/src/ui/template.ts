@@ -67,6 +67,13 @@ export function renderAppShell(): string {
                   <option value="minimal">Minimal</option>
                 </select>
               </label>
+              <label>
+                Cover
+                <select id="cover-template-select">
+                  <option value="portrait">Portrait cover</option>
+                  <option value="feature-split">Feature split</option>
+                </select>
+              </label>
             </div>
           </section>
 

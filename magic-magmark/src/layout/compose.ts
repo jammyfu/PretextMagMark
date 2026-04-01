@@ -1,5 +1,6 @@
 import { layoutStyledSpans, measureSingleLine } from '../adapters/pretext'
 import type {
+  CoverTemplateKey,
   InlineSpan,
   InlineStyleName,
   MarkdownBlock,
@@ -20,14 +21,14 @@ type BlockContext = {
   previous: MarkdownBlock | null
 }
 
-export function buildRenderDocument(source: string, presetKey: PresetKey, themeKey: ThemeKey): RenderDocument {
+export function buildRenderDocument(source: string, presetKey: PresetKey, themeKey: ThemeKey, coverTemplate: CoverTemplateKey): RenderDocument {
   const preset = getPreset(presetKey)
   const theme = getTheme(themeKey)
   const blocks = parseMarkdown(source)
   const contentPages = preset.pageHeight === null
     ? buildLongImagePages(blocks, preset, theme)
     : composePagedLayout(blocks, preset, theme)
-  const pages = preset.pageHeight === null ? contentPages : prependCoverPage(blocks, preset, contentPages)
+  const pages = preset.pageHeight === null ? contentPages : prependCoverPage(blocks, preset, contentPages, coverTemplate)
 
   return {
     preset,
@@ -47,8 +48,8 @@ function buildLongImagePages(blocks: MarkdownBlock[], preset: Preset, theme: The
   }]
 }
 
-function prependCoverPage(blocks: MarkdownBlock[], preset: Preset, pages: PageLayout[]): PageLayout[] {
-  const cover = extractCoverData(blocks)
+function prependCoverPage(blocks: MarkdownBlock[], preset: Preset, pages: PageLayout[], coverTemplate: CoverTemplateKey): PageLayout[] {
+  const cover = extractCoverData(blocks, coverTemplate)
   if (cover === null) return pages
   return [{
     kind: 'cover',
@@ -58,13 +59,14 @@ function prependCoverPage(blocks: MarkdownBlock[], preset: Preset, pages: PageLa
   }, ...pages]
 }
 
-function extractCoverData(blocks: MarkdownBlock[]): PageLayout['cover'] | null {
+function extractCoverData(blocks: MarkdownBlock[], coverTemplate: CoverTemplateKey): PageLayout['cover'] | null {
   const title = blocks.find((block): block is Extract<MarkdownBlock, { kind: 'heading' }> => block.kind === 'heading' && block.depth === 1)
   if (title === undefined) return null
   const dek = blocks.find((block): block is Extract<MarkdownBlock, { kind: 'paragraph' }> => block.kind === 'paragraph')
   const kicker = blocks.find((block): block is Extract<MarkdownBlock, { kind: 'heading' }> => block.kind === 'heading' && block.depth === 4)
   const image = blocks.find((block): block is Extract<MarkdownBlock, { kind: 'image' }> => block.kind === 'image')
   return {
+    template: coverTemplate,
     title: flattenSpans(title.spans),
     dek: dek === undefined ? undefined : flattenSpans(dek.spans),
     kicker: kicker === undefined ? undefined : flattenSpans(kicker.spans),

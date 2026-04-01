@@ -93,6 +93,11 @@ function drawCoverPage(
   imageAssets: ImageAssetMap,
   ornament: OrnamentKey,
 ): void {
+  if (page.cover?.template === 'feature-split') {
+    drawFeatureSplitCover(ctx, width, height, page, doc, imageAssets, ornament)
+    return
+  }
+
   const { preset, theme } = doc
   const cover = page.cover!
   ctx.clearRect(0, 0, width, height)
@@ -152,6 +157,73 @@ function drawCoverPage(
   ctx.fillStyle = coverAsset === undefined ? theme.muted : '#f3dfd0'
   ctx.font = `600 18px "Consolas", "SFMono-Regular", ui-monospace, monospace`
   ctx.fillText('PRETEXT CORE  |  MAGMARK APP  |  HI-RES EXPORT', preset.marginX, height - 114)
+}
+
+function drawFeatureSplitCover(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  page: PageLayout,
+  doc: RenderDocument,
+  imageAssets: ImageAssetMap,
+  ornament: OrnamentKey,
+): void {
+  const { preset, theme } = doc
+  const cover = page.cover!
+  ctx.clearRect(0, 0, width, height)
+  ctx.fillStyle = theme.pageFill
+  ctx.fillRect(0, 0, width, height)
+
+  const panelWidth = Math.round(width * 0.46)
+  const imageUrl = cover.imageUrl
+  const coverAsset = imageUrl === undefined ? undefined : imageAssets.get(imageUrl)
+
+  ctx.fillStyle = theme.background
+  ctx.fillRect(0, 0, panelWidth, height)
+  if (coverAsset !== undefined) {
+    drawPlacedImage(ctx, coverAsset.image, panelWidth, 0, width - panelWidth, height, 'cover')
+    const wash = ctx.createLinearGradient(panelWidth, 0, width, height)
+    wash.addColorStop(0, 'rgba(27, 20, 18, 0.18)')
+    wash.addColorStop(1, 'rgba(27, 20, 18, 0.38)')
+    ctx.fillStyle = wash
+    ctx.fillRect(panelWidth, 0, width - panelWidth, height)
+  } else {
+    ctx.fillStyle = theme.pageEdge
+    ctx.fillRect(panelWidth, 0, width - panelWidth, height)
+  }
+
+  ctx.fillStyle = theme.accent
+  ctx.fillRect(72, 96, 132, 8)
+  ctx.font = `700 18px "PingFang SC", "Segoe UI", sans-serif`
+  ctx.fillText((cover.kicker ?? 'FEATURE STORY').toUpperCase(), 72, 152)
+
+  const titleLines = wrapTextLines(ctx, cover.title, theme.styles.h1.font, panelWidth - 144)
+  ctx.font = theme.styles.h1.font
+  ctx.fillStyle = theme.ink
+  for (let index = 0; index < titleLines.length; index++) {
+    ctx.fillText(titleLines[index]!, 72, 296 + index * theme.styles.h1.lineHeight)
+  }
+
+  if (cover.dek !== undefined) {
+    const dekLines = wrapTextLines(ctx, cover.dek, theme.styles.lead.font, panelWidth - 164)
+    ctx.font = theme.styles.lead.font
+    ctx.fillStyle = theme.muted
+    const baseY = 296 + titleLines.length * theme.styles.h1.lineHeight + 42
+    for (let index = 0; index < dekLines.length; index++) {
+      ctx.fillText(dekLines[index]!, 72, baseY + index * theme.styles.lead.lineHeight)
+    }
+  }
+
+  ctx.strokeStyle = theme.rule
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.moveTo(panelWidth, 72)
+  ctx.lineTo(panelWidth, height - 72)
+  ctx.stroke()
+
+  ctx.fillStyle = ornament === 'editorial' ? theme.muted : theme.accent
+  ctx.font = `600 18px "Consolas", "SFMono-Regular", ui-monospace, monospace`
+  ctx.fillText('COVER TEMPLATE 02  |  FEATURE SPLIT', 72, height - 108)
 }
 
 function drawTextRow(ctx: CanvasRenderingContext2D, row: TextRow, doc: RenderDocument): void {
