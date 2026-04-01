@@ -507,7 +507,10 @@ function applyJustification(rows: TextRow[], targetWidth: number): void {
     const slots = row.fragments.reduce((count, fragment) => count + (fragment.stretchableBefore ? 1 : 0), 0)
     if (slots === 0 || row.lineWidth === undefined) continue
     const fillRatio = row.lineWidth / targetWidth
-    if (fillRatio < 0.68) continue
+    const averageExpansion = (targetWidth - row.lineWidth) / slots
+    if (fillRatio < 0.8) continue
+    if (slots < 3) continue
+    if (averageExpansion > 10) continue
     row.targetWidth = targetWidth
     row.justifySlots = slots
   }
