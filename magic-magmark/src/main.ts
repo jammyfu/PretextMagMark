@@ -1,7 +1,7 @@
 import './styles.css'
 import { countImageRefs, releaseImageAssets, resolveImageAssets } from './assets/images'
 import { SAMPLE_MARKDOWN } from './content/sample'
-import type { CoverTemplateKey, OrnamentKey, PresetKey, RenderDocument, ThemeKey } from './domain/types'
+import type { CoverTemplateKey, DensityKey, FontPackKey, OrnamentKey, PresetKey, RenderDocument, ThemeKey } from './domain/types'
 import { canvasToBlob, downloadBlob, escapeHtml, sanitizeStem } from './export/png'
 import { buildRenderDocument } from './layout/compose'
 import { drawPageToCanvas } from './render/canvas'
@@ -15,6 +15,8 @@ type DomCache = {
   documentName: HTMLInputElement
   presetSelect: HTMLSelectElement
   themeSelect: HTMLSelectElement
+  fontPackSelect: HTMLSelectElement
+  densitySelect: HTMLSelectElement
   scaleSelect: HTMLSelectElement
   ornamentSelect: HTMLSelectElement
   coverTemplateSelect: HTMLSelectElement
@@ -36,6 +38,8 @@ type State = {
   fileStem: string
   presetKey: PresetKey
   themeKey: ThemeKey
+  fontPackKey: FontPackKey
+  densityKey: DensityKey
   ornament: OrnamentKey
   coverTemplate: CoverTemplateKey
   scale: number
@@ -58,6 +62,8 @@ const st: State = {
   fileStem: 'magic-magmark',
   presetKey: 'xiaohongshu',
   themeKey: 'berry',
+  fontPackKey: 'serif-cn',
+  densityKey: 'balanced',
   ornament: 'editorial',
   coverTemplate: 'portrait',
   scale: 3,
@@ -82,6 +88,8 @@ function getDom(): DomCache {
     documentName: getRequiredElement('document-name', HTMLInputElement),
     presetSelect: getRequiredElement('preset-select', HTMLSelectElement),
     themeSelect: getRequiredElement('theme-select', HTMLSelectElement),
+    fontPackSelect: getRequiredElement('font-pack-select', HTMLSelectElement),
+    densitySelect: getRequiredElement('density-select', HTMLSelectElement),
     scaleSelect: getRequiredElement('scale-select', HTMLSelectElement),
     ornamentSelect: getRequiredElement('ornament-select', HTMLSelectElement),
     coverTemplateSelect: getRequiredElement('cover-template-select', HTMLSelectElement),
@@ -135,6 +143,16 @@ function wireEvents(): void {
 
   dom.themeSelect.addEventListener('change', () => {
     st.themeKey = dom.themeSelect.value as ThemeKey
+    void renderFromState()
+  })
+
+  dom.fontPackSelect.addEventListener('change', () => {
+    st.fontPackKey = dom.fontPackSelect.value as FontPackKey
+    void renderFromState()
+  })
+
+  dom.densitySelect.addEventListener('change', () => {
+    st.densityKey = dom.densitySelect.value as DensityKey
     void renderFromState()
   })
 
@@ -197,7 +215,7 @@ async function renderFromState(): Promise<void> {
   const renderToken = ++st.renderToken
   st.source = dom.markdownInput.value
   st.fileStem = sanitizeStem(dom.documentName.value)
-  st.document = buildRenderDocument(st.source, st.presetKey, st.themeKey, st.coverTemplate)
+  st.document = buildRenderDocument(st.source, st.presetKey, st.themeKey, st.coverTemplate, st.fontPackKey, st.densityKey)
   st.currentPageIndex = Math.min(st.currentPageIndex, st.document.pages.length - 1)
   releaseImageAssets(st.imageAssets)
   st.imageAssets = new Map()
@@ -238,6 +256,8 @@ function syncUi(): void {
     `Canvas size: ${doc.preset.pageWidth} x ${Math.round(page.height)}`,
     `Grid: ${doc.preset.columnCount} column${doc.preset.columnCount > 1 ? 's' : ''}${doc.preset.columnCount > 1 ? `, ${doc.preset.columnGap}px gap` : ''}`,
     st.presetKey === 'xiaohongshu' ? 'Mode: auto-paginated social cards' : 'Mode: single long image',
+    `Font pack: ${st.fontPackKey}`,
+    `Density: ${st.densityKey}`,
     `Cover template: ${st.coverTemplate}`,
     `Export scale: ${st.scale}x`,
     `Images resolved: ${st.imageAssets.size} / ${countImageRefs(doc)}`,

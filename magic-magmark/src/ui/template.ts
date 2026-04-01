@@ -50,6 +50,23 @@ export function renderAppShell(): string {
                 <select id="theme-select">
                   <option value="berry">Berry Editorial</option>
                   <option value="ink">Ink Column</option>
+                  <option value="forest">Forest Review</option>
+                </select>
+              </label>
+              <label>
+                Font pack
+                <select id="font-pack-select">
+                  <option value="serif-cn">Source Han Serif</option>
+                  <option value="songti">Songti Review</option>
+                  <option value="sans-editorial">Sans Editorial</option>
+                </select>
+              </label>
+              <label>
+                Density
+                <select id="density-select">
+                  <option value="airy">Airy</option>
+                  <option value="balanced" selected>Balanced</option>
+                  <option value="compact">Compact</option>
                 </select>
               </label>
               <label>

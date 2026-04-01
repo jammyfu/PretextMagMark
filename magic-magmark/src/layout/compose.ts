@@ -1,6 +1,8 @@
 import { layoutStyledSpans, measureSingleLine } from '../adapters/pretext'
 import type {
   CoverTemplateKey,
+  DensityKey,
+  FontPackKey,
   InlineSpan,
   InlineStyleName,
   MarkdownBlock,
@@ -21,9 +23,16 @@ type BlockContext = {
   previous: MarkdownBlock | null
 }
 
-export function buildRenderDocument(source: string, presetKey: PresetKey, themeKey: ThemeKey, coverTemplate: CoverTemplateKey): RenderDocument {
+export function buildRenderDocument(
+  source: string,
+  presetKey: PresetKey,
+  themeKey: ThemeKey,
+  coverTemplate: CoverTemplateKey,
+  fontPackKey: FontPackKey,
+  densityKey: DensityKey,
+): RenderDocument {
   const preset = getPreset(presetKey)
-  const theme = getTheme(themeKey)
+  const theme = getTheme(themeKey, fontPackKey, densityKey)
   const blocks = parseMarkdown(source)
   const contentPages = preset.pageHeight === null
     ? buildLongImagePages(blocks, preset, theme)
