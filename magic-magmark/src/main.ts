@@ -35,6 +35,9 @@ type DomCache = {
   renderButton: HTMLButtonElement
   exportCurrentButton: HTMLButtonElement
   exportAllButton: HTMLButtonElement
+  statsToggleButton: HTMLButtonElement
+  statsCloseButton: HTMLButtonElement
+  statsPopover: HTMLElement
   prevPageButton: HTMLButtonElement
   nextPageButton: HTMLButtonElement
   pageChip: HTMLSpanElement
@@ -43,6 +46,7 @@ type DomCache = {
   previewMeta: HTMLElement
   previewCanvas: HTMLCanvasElement
   stats: HTMLElement
+  statsHeadingVisible: HTMLElement
 }
 
 type State = {
@@ -62,6 +66,7 @@ type State = {
   imageFiles: File[]
   renderToken: number
   uiLanguage: UiLanguageKey
+  statsOpen: boolean
 }
 
 const app = document.getElementById('app')
@@ -88,6 +93,7 @@ const st: State = {
   imageFiles: [],
   renderToken: 0,
   uiLanguage: 'zh',
+  statsOpen: false,
 }
 
 dom.markdownInput.value = SAMPLE_MARKDOWN
@@ -115,6 +121,9 @@ function getDom(): DomCache {
     renderButton: getRequiredElement('render-button', HTMLButtonElement),
     exportCurrentButton: getRequiredElement('export-current-button', HTMLButtonElement),
     exportAllButton: getRequiredElement('export-all-button', HTMLButtonElement),
+    statsToggleButton: getRequiredElement('stats-toggle-button', HTMLButtonElement),
+    statsCloseButton: getRequiredElement('stats-close-button', HTMLButtonElement),
+    statsPopover: getRequiredElement('stats-popover', HTMLElement),
     prevPageButton: getRequiredElement('prev-page-button', HTMLButtonElement),
     nextPageButton: getRequiredElement('next-page-button', HTMLButtonElement),
     pageChip: getRequiredElement('page-chip', HTMLSpanElement),
@@ -123,6 +132,7 @@ function getDom(): DomCache {
     previewMeta: getRequiredElement('preview-meta', HTMLElement),
     previewCanvas: getRequiredElement('preview-canvas', HTMLCanvasElement),
     stats: getRequiredElement('stats', HTMLElement),
+    statsHeadingVisible: getRequiredElement('stats-heading-visible', HTMLElement),
   }
 }
 
@@ -225,6 +235,16 @@ function wireEvents(): void {
 
   dom.exportAllButton.addEventListener('click', () => {
     void exportAllPages()
+  })
+
+  dom.statsToggleButton.addEventListener('click', () => {
+    st.statsOpen = !st.statsOpen
+    syncStatsVisibility()
+  })
+
+  dom.statsCloseButton.addEventListener('click', () => {
+    st.statsOpen = false
+    syncStatsVisibility()
   })
 
   dom.fileInput.addEventListener('change', () => {
@@ -330,6 +350,7 @@ function syncUi(): void {
       ]
 
   dom.stats.innerHTML = summary.map(item => `<div>${escapeHtml(item)}</div>`).join('')
+  syncStatsVisibility()
 }
 
 function syncStaticUi(): void {
@@ -359,11 +380,14 @@ function syncStaticUi(): void {
   setText('cover-label', copy.cover)
   setText('actions-title', copy.actionsTitle)
   setText('stats-heading', copy.statsHeading)
+  setText('stats-heading-visible', copy.statsHeading)
   setText('waiting-copy', copy.waiting)
   dom.sampleButton.textContent = copy.loadSample
   dom.renderButton.textContent = copy.reflow
   dom.exportCurrentButton.textContent = copy.exportCurrent
   dom.exportAllButton.textContent = copy.exportAll
+  dom.statsToggleButton.textContent = copy.statsToggle
+  dom.statsCloseButton.textContent = copy.statsClose
   dom.prevPageButton.textContent = copy.previous
   dom.nextPageButton.textContent = copy.next
   dom.previewHeading.textContent = copy.livePreview
@@ -377,6 +401,11 @@ function syncStaticUi(): void {
   setSelectOptionText(dom.ornamentSelect, copy.ornamentOptions)
   setSelectOptionText(dom.coverTemplateSelect, copy.coverOptions)
   setSelectOptionText(dom.languageModeSelect, copy.languageModeOptions)
+  syncStatsVisibility()
+}
+
+function syncStatsVisibility(): void {
+  dom.statsPopover.hidden = !st.statsOpen
 }
 
 function setText(id: string, value: string): void {

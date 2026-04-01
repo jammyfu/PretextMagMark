@@ -24,6 +24,8 @@ type UiCopy = {
   ornament: string
   cover: string
   actionsTitle: string
+  statsToggle: string
+  statsClose: string
   reflow: string
   exportCurrent: string
   exportAll: string
@@ -69,6 +71,8 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
     ornament: '装饰',
     cover: '封面',
     actionsTitle: '操作',
+    statsToggle: '文档信息',
+    statsClose: '收起信息',
     reflow: '重新排版',
     exportCurrent: '导出当前页',
     exportAll: '导出全部',
@@ -138,6 +142,8 @@ const UI_COPY: Record<UiLanguageKey, UiCopy> = {
     ornament: 'Ornament',
     cover: 'Cover',
     actionsTitle: 'Actions',
+    statsToggle: 'Document info',
+    statsClose: 'Hide info',
     reflow: 'Reflow',
     exportCurrent: 'Export current',
     exportAll: 'Export all',
@@ -250,18 +256,25 @@ export function renderAppShell(): string {
         <div class="control-card control-card-actions">
           <p id="actions-title" class="control-kicker"></p>
           <span id="stats-heading" class="visually-hidden"></span>
-          <div class="toolbar-row">
+          <div class="toolbar-row toolbar-row-actions">
             <button id="render-button" class="tool-button tool-button-primary" type="button"></button>
             <button id="export-current-button" class="tool-button tool-button-soft" type="button"></button>
             <button id="export-all-button" class="tool-button tool-button-soft" type="button"></button>
+            <button id="stats-toggle-button" class="tool-button tool-button-soft" type="button"></button>
           </div>
           <div class="pager-row">
             <button id="prev-page-button" class="tool-button tool-button-soft" type="button"></button>
             <span id="page-chip" class="page-chip"></span>
             <button id="next-page-button" class="tool-button tool-button-soft" type="button"></button>
           </div>
-          <div class="stats-card" id="stats">
-            <div id="waiting-copy"></div>
+          <div class="stats-popover" id="stats-popover" hidden>
+            <div class="stats-popover-head">
+              <strong id="stats-heading-visible"></strong>
+              <button id="stats-close-button" class="tool-button tool-button-soft tool-button-compact" type="button"></button>
+            </div>
+            <div class="stats-card" id="stats">
+              <div id="waiting-copy"></div>
+            </div>
           </div>
         </div>
       </section>

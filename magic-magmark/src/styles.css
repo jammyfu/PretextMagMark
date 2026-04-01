@@ -46,7 +46,7 @@ body {
 
 .workspace-shell {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   min-height: calc(100vh - 28px);
 }
 
@@ -65,13 +65,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 14px 18px;
 }
 
 .workspace-brand {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .workspace-eyebrow,
@@ -85,16 +85,16 @@ body {
 
 .workspace-title {
   margin: 0;
-  font: 700 clamp(24px, 3vw, 34px)/0.98 Georgia, "Times New Roman", "Songti SC", serif;
+  font: 700 clamp(22px, 2.6vw, 30px)/0.98 Georgia, "Times New Roman", "Songti SC", serif;
   letter-spacing: -0.03em;
 }
 
 .workspace-intro {
-  margin: 5px 0 0;
+  margin: 3px 0 0;
   color: var(--muted);
   max-width: 64ch;
-  line-height: 1.45;
-  font-size: 13px;
+  line-height: 1.35;
+  font-size: 12px;
 }
 
 .workspace-modebar {
@@ -122,7 +122,7 @@ body {
 
 .control-deck {
   display: grid;
-  grid-template-columns: 1.2fr 2fr 1.1fr;
+  grid-template-columns: 1.1fr 1.9fr auto;
   gap: 0;
   overflow: hidden;
   align-items: start;
@@ -130,8 +130,8 @@ body {
 
 .control-card {
   display: grid;
-  gap: 10px;
-  padding: 14px;
+  gap: 8px;
+  padding: 12px;
   border-right: 1px solid var(--line);
   align-self: start;
 }
@@ -151,21 +151,25 @@ body {
 
 .control-row label,
 .control-grid label {
-  flex: 1 1 180px;
+  flex: 1 1 160px;
 }
 
 .control-grid label {
-  min-width: 140px;
+  min-width: 124px;
 }
 
 .pager-row {
   align-items: center;
 }
 
+.toolbar-row-actions {
+  align-items: center;
+}
+
 .workspace-main {
   display: grid;
   grid-template-columns: minmax(420px, 1fr) minmax(420px, 640px);
-  gap: 14px;
+  gap: 12px;
   min-height: 0;
 }
 
@@ -178,8 +182,8 @@ body {
 
 .editor-stage {
   grid-template-rows: auto 1fr;
-  padding: 16px;
-  gap: 10px;
+  padding: 14px;
+  gap: 8px;
 }
 
 .editor-stage-head {
@@ -198,7 +202,7 @@ body {
 label,
 .editor-label {
   display: grid;
-  gap: 7px;
+  gap: 6px;
   color: var(--muted-strong);
   font-size: 12px;
   font-weight: 600;
@@ -219,13 +223,13 @@ input[type="text"] {
 
 select,
 input[type="text"] {
-  min-height: 40px;
-  padding: 0 12px;
+  min-height: 38px;
+  padding: 0 11px;
 }
 
 textarea {
-  min-height: 560px;
-  padding: 14px;
+  min-height: 520px;
+  padding: 12px;
   resize: vertical;
   font: 13px/1.65 "Cascadia Code", "Consolas", "SFMono-Regular", ui-monospace, monospace;
 }
@@ -242,15 +246,15 @@ input[type="text"]:focus {
   appearance: none;
   border: 1px solid transparent;
   border-radius: 999px;
-  min-height: 38px;
-  padding: 0 13px;
+  min-height: 36px;
+  padding: 0 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   cursor: pointer;
   text-decoration: none;
-  font: 700 11px/1 "Segoe UI", "PingFang SC", sans-serif;
+  font: 700 10px/1 "Segoe UI", "PingFang SC", sans-serif;
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, opacity 140ms ease, background 140ms ease;
 }
 
@@ -291,27 +295,55 @@ label.tool-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 110px;
-  min-height: 38px;
-  padding: 0 12px;
+  min-width: 96px;
+  min-height: 36px;
+  padding: 0 10px;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.92);
   color: var(--muted-strong);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
+}
+
+.stats-popover {
+  display: grid;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.stats-popover[hidden] {
+  display: none;
+}
+
+.stats-popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stats-popover-head strong {
+  font: 700 11px/1.2 "Segoe UI", "PingFang SC", sans-serif;
+  color: var(--muted-strong);
+}
+
+.tool-button-compact {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 10px;
 }
 
 .stats-card {
   display: grid;
-  gap: 6px;
-  padding: 12px;
-  border-radius: 16px;
+  gap: 5px;
+  padding: 10px;
+  border-radius: 14px;
   background: rgba(252, 249, 243, 0.92);
   border: 1px solid rgba(25, 22, 18, 0.08);
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .preview-stage {
@@ -322,8 +354,8 @@ label.tool-button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 16px 18px;
+  gap: 10px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -333,20 +365,20 @@ label.tool-button {
 }
 
 .preview-stage-title strong {
-  font: 700 17px/1.08 Georgia, "Times New Roman", "Songti SC", serif;
+  font: 700 16px/1.08 Georgia, "Times New Roman", "Songti SC", serif;
   letter-spacing: -0.03em;
 }
 
 .preview-stage-title span,
 .preview-meta {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .preview-stage-body {
   min-height: 0;
   overflow: auto;
-  padding: 18px;
+  padding: 16px;
   display: grid;
   place-items: center;
 }
