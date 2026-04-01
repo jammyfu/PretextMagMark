@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Pretext markdown 小红书与长图排版 demo，支持高分辨率 PNG 导出。">
+  <title>Pretext Markdown Poster</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --bg: #efe4d3;
+      --panel: rgba(255, 249, 240, 0.9);
+      --panel-strong: rgba(252, 244, 232, 0.98);
+      --ink: #241714;
+      --muted: #7c6558;
+      --accent: #ca4d37;
+      --rule: rgba(65, 37, 27, 0.14);
+      --shadow: 0 24px 90px rgba(67, 36, 19, 0.14);
+    }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top left, rgba(218, 102, 77, 0.2), transparent 28%),
+        radial-gradient(circle at 80% 0%, rgba(112, 71, 44, 0.12), transparent 22%),
+        linear-gradient(180deg, #f8efe3 0%, var(--bg) 46%, #eadcc8 100%);
+      color: var(--ink);
+      font-family: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+    .shell {
+      display: grid;
+      grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
+      gap: 22px;
+      width: min(1500px, calc(100vw - 28px));
+      margin: 14px auto;
+      min-height: calc(100vh - 28px);
+    }
+    .panel,
+    .preview {
+      border: 1px solid var(--rule);
+      border-radius: 28px;
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel {
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-head {
+      padding: 24px 24px 14px;
+      border-bottom: 1px solid var(--rule);
+      background:
+        linear-gradient(135deg, rgba(202, 77, 55, 0.18), transparent 58%),
+        linear-gradient(180deg, rgba(255,255,255,0.38), transparent);
+    }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font: 700 11px/1.2 "Consolas", "SFMono-Regular", ui-monospace, monospace;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font: 700 clamp(30px, 4vw, 40px)/0.96 Georgia, "Times New Roman", "Songti SC", serif;
+      letter-spacing: -0.03em;
+    }
+    .intro {
+      margin: 12px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 38ch;
+    }
+    .controls {
+      display: grid;
+      gap: 18px;
+      padding: 22px;
+    }
+    .section {
+      display: grid;
+      gap: 10px;
+    }
+    .section-title {
+      margin: 0;
+      font: 700 12px/1.2 "Consolas", "SFMono-Regular", ui-monospace, monospace;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .inline-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    select,
+    textarea,
+    input[type="text"] {
+      width: 100%;
+      border: 1px solid rgba(53, 34, 25, 0.12);
+      border-radius: 16px;
+      background: var(--panel-strong);
+      color: var(--ink);
+      font: inherit;
+      outline: none;
+    }
+    select,
+    input[type="text"] {
+      min-height: 46px;
+      padding: 0 14px;
+    }
+    textarea {
+      min-height: 360px;
+      resize: vertical;
+      padding: 16px 18px;
+      line-height: 1.6;
+      font-family: "Cascadia Code", "Consolas", "SFMono-Regular", ui-monospace, monospace;
+      font-size: 13px;
+    }
+    .button-row,
+    .pager {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    button,
+    .file-button {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #d6614c 0%, #b63e2b 100%);
+      color: white;
+      font: 700 13px/1 "Segoe UI", "PingFang SC", sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    button.secondary,
+    .file-button.secondary {
+      background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(247, 236, 223, 0.95));
+      color: var(--ink);
+      box-shadow: inset 0 0 0 1px rgba(53, 34, 25, 0.12);
+    }
+    .file-button {
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 120px;
+    }
+    .file-button input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .meta {
+      display: grid;
+      gap: 8px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255, 252, 247, 0.72);
+      border: 1px solid rgba(53, 34, 25, 0.08);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .preview {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-width: 0;
+    }
+    .preview-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .preview-title {
+      display: grid;
+      gap: 4px;
+    }
+    .preview-title strong {
+      font: 700 18px/1.1 Georgia, "Times New Roman", "Songti SC", serif;
+      letter-spacing: -0.02em;
+    }
+    .preview-title span,
+    .preview-meta {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .preview-body {
+      overflow: auto;
+      padding: 24px;
+    }
+    .canvas-wrap {
+      display: grid;
+      justify-items: center;
+      gap: 12px;
+      min-height: 100%;
+    }
+    canvas {
+      width: min(100%, 420px);
+      height: auto;
+      border-radius: 26px;
+      border: 1px solid rgba(53, 34, 25, 0.1);
+      background: white;
+      box-shadow: 0 28px 80px rgba(72, 44, 31, 0.18);
+    }
+    .page-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 251, 245, 0.9);
+      border: 1px solid rgba(53, 34, 25, 0.08);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 1080px) {
+      .shell {
+        grid-template-columns: 1fr;
+        width: min(100vw - 18px, 960px);
+        margin: 9px auto;
+        min-height: auto;
+      }
+      .preview-body {
+        min-height: 46vh;
+      }
+      canvas {
+        width: min(100%, 360px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="panel">
+      <header class="panel-head">
+        <p class="eyebrow">Pretext / Markdown Layout</p>
+        <h1>小红书与长图排版</h1>
+        <p class="intro">
+          直接导入 Markdown 文件，使用当前仓库的 Pretext 行布局能力生成小红书多页图或长图，
+          并导出高分辨率 PNG。
+        </p>
+      </header>
+
+      <div class="controls">
+        <section class="section">
+          <p class="section-title">素材</p>
+          <div class="button-row">
+            <label class="file-button secondary">
+              导入 .md
+              <input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain">
+            </label>
+            <button id="sample-button" class="secondary" type="button">载入示例</button>
+          </div>
+          <label>
+            文件名
+            <input id="document-name" type="text" value="pretext-layout">
+          </label>
+          <label>
+            Markdown
+            <textarea id="markdown-input" spellcheck="false"></textarea>
+          </label>
+        </section>
+
+        <section class="section">
+          <p class="section-title">导出设置</p>
+          <div class="inline-grid">
+            <label>
+              版式
+              <select id="preset-select">
+                <option value="xiaohongshu">小红书 1080×1440</option>
+                <option value="long-image">长图 1080×Auto</option>
+              </select>
+            </label>
+            <label>
+              主题
+              <select id="theme-select">
+                <option value="berry">莓红杂志</option>
+                <option value="ink">墨黑专栏</option>
+              </select>
+            </label>
+            <label>
+              清晰度
+              <select id="scale-select">
+                <option value="2">2× 预览快</option>
+                <option value="3" selected>3× 标准高清</option>
+                <option value="4">4× 超清</option>
+              </select>
+            </label>
+            <label>
+              页面装饰
+              <select id="ornament-select">
+                <option value="editorial">Editorial</option>
+                <option value="minimal">Minimal</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="section">
+          <p class="section-title">操作</p>
+          <div class="button-row">
+            <button id="render-button" type="button">重新排版</button>
+            <button id="export-current-button" type="button">导出当前 PNG</button>
+            <button id="export-all-button" class="secondary" type="button">导出全部页</button>
+          </div>
+          <div class="pager">
+            <button id="prev-page-button" class="secondary" type="button">上一页</button>
+            <button id="next-page-button" class="secondary" type="button">下一页</button>
+            <span id="page-chip" class="page-chip">第 1 / 1 页</span>
+          </div>
+        </section>
+
+        <section class="meta" id="stats">
+          <div>等待排版…</div>
+        </section>
+      </div>
+    </section>
+
+    <section class="preview">
+      <header class="preview-head">
+        <div class="preview-title">
+          <strong id="preview-heading">实时预览</strong>
+          <span id="preview-subheading">基于 pretext 的逐行排版与 canvas 导出</span>
+        </div>
+        <div id="preview-meta" class="preview-meta">1080 × 1440</div>
+      </header>
+      <div class="preview-body">
+        <div class="canvas-wrap">
+          <canvas id="preview-canvas"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./markdown-poster.ts"></script>
+</body>
+</html>

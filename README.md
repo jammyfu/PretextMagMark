@@ -15,6 +15,82 @@ npm install @chenglou/pretext
 Clone the repo, run `bun install`, then `bun start`, and open the `/demos` in your browser (no trailing slash. Bun devserver bugs on those)
 Alternatively, see them live at [chenglou.me/pretext](https://chenglou.me/pretext/). Some more at [somnai-dreams.github.io/pretext-demos](https://somnai-dreams.github.io/pretext-demos/)
 
+### Markdown Poster Demo
+
+This repo now also includes a browser demo for turning Markdown into:
+- Xiaohongshu-style multi-page cards (`1080 x 1440`)
+- a single long image (`1080 x auto`)
+
+Open `/demos/markdown-poster` after starting the demo server.
+
+The implementation lives in:
+- [pages/demos/markdown-poster.html](pages/demos/markdown-poster.html)
+- [pages/demos/markdown-poster.ts](pages/demos/markdown-poster.ts)
+
+What it currently supports:
+- importing a local `.md` file
+- direct editing in a textarea
+- headings, paragraphs, blockquotes, ordered/unordered lists, fenced code blocks, dividers
+- Markdown image syntax as layout placeholders
+- theme switching
+- `2x` / `3x` / `4x` PNG export
+
+What it deliberately does not do yet:
+- WeChat embedded article HTML composition
+- real image asset drawing for Markdown image nodes; those are placeholder blocks for now
+
+#### How It Works
+
+The demo uses Pretext as the line layout engine rather than relying on DOM text measurement.
+
+Pipeline:
+1. Parse Markdown into a small block model in userland.
+2. Convert each block into styled inline spans.
+3. For each text style, call `prepareWithSegments(text, font)` once and cache the result.
+4. Use `layoutNextLine()` to stream each rendered line at the current available width.
+5. Assemble the lines into block rows with explicit `x / y / height` geometry.
+6. For Xiaohongshu mode, paginate those rows into fixed-height `1080 x 1440` pages.
+7. For long-image mode, keep the rows in one continuous document and derive the final height from content.
+8. Draw the final geometry into a canvas and export PNG from the canvas bitmap.
+
+Why this structure:
+- line breaking stays aligned with the repo's current Pretext behavior
+- no DOM measurement loop is needed for text layout
+- pagination and export stay deterministic because all geometry is explicit before drawing
+- the same layout pipeline can target multiple output sizes without changing the text engine
+
+#### How To Use It
+
+1. Install dependencies with `bun install`.
+2. Start the demo server with `bun start`.
+3. Open `http://127.0.0.1:3000/demos/markdown-poster`.
+4. Import a Markdown file or paste Markdown into the editor.
+5. Choose `Xiaohongshu` or `Long Image`.
+6. Choose theme and export scale.
+7. Click `重新排版` to rebuild the layout.
+8. Click `导出当前 PNG` or `导出全部页`.
+
+Practical notes:
+- `3x` is the default high-resolution export mode.
+- `4x` is sharper but costs more memory and can be slower on large long images.
+- in Xiaohongshu mode, `导出全部页` downloads one PNG per page.
+- in long-image mode, export is a single PNG whose height is content-driven.
+
+#### How To Test It
+
+There is no dedicated automated test for this demo yet, so verify it manually in the browser.
+
+Recommended manual checks:
+- load the sample content and confirm both presets render without overlap or clipping
+- import a real `.md` file and confirm headings, lists, quotes, and fenced code blocks all appear
+- switch between `Xiaohongshu` and `Long Image` and verify page count / final height updates
+- export at `2x`, `3x`, and `4x` and confirm the downloaded PNG dimensions scale as expected
+- confirm `导出全部页` is only enabled for Xiaohongshu mode
+- add a Markdown image node such as `![caption](./cover.png)` and confirm it renders as a placeholder card
+- resize the browser and confirm the preview still matches the chosen output size rather than the viewport size
+
+If you change the demo's layout rules, styles, parsing, or export behavior, re-run those checks before merging.
+
 ## API
 
 Pretext serves 2 use cases:
