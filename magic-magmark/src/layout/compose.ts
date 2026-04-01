@@ -151,9 +151,23 @@ function layoutBlock(
       return { rows: [{ kind: 'page-break', y: startY, height: 0 }], nextY: startY }
 
     case 'image':
+      {
+        const mediaHeight = resolveImageHeight(maxWidth, block.ratio)
+        const cardHeight = mediaHeight + 126
       return {
-        rows: [{ kind: 'image', y: startY + 18, height: 280, alt: block.alt, url: block.url, caption: block.caption }],
-        nextY: startY + 336,
+        rows: [{
+          kind: 'image',
+          y: startY + 18,
+          height: cardHeight,
+          mediaHeight,
+          alt: block.alt,
+          url: block.url,
+          caption: block.caption,
+          ratio: block.ratio,
+          fit: block.fit,
+        }],
+        nextY: startY + cardHeight + 74,
+      }
       }
   }
 }
@@ -398,7 +412,17 @@ function cloneRow(row: RenderRow): RenderRow {
     case 'page-break':
       return { kind: 'page-break', y: row.y, height: row.height }
     case 'image':
-      return { kind: 'image', y: row.y, height: row.height, alt: row.alt, url: row.url, caption: row.caption }
+      return {
+        kind: 'image',
+        y: row.y,
+        height: row.height,
+        mediaHeight: row.mediaHeight,
+        alt: row.alt,
+        url: row.url,
+        caption: row.caption,
+        ratio: row.ratio,
+        fit: row.fit,
+      }
     case 'text':
       return {
         kind: 'text',
@@ -411,4 +435,21 @@ function cloneRow(row: RenderRow): RenderRow {
         tone: row.tone,
       }
   }
+}
+
+function resolveImageHeight(width: number, ratio: string | undefined): number {
+  const parsed = parseRatio(ratio)
+  if (parsed === null) return 320
+  const height = width * (parsed.height / parsed.width)
+  return Math.max(220, Math.min(560, Math.round(height)))
+}
+
+function parseRatio(ratio: string | undefined): { width: number, height: number } | null {
+  if (ratio === undefined) return null
+  const match = ratio.match(/^(\d+):(\d+)$/)
+  if (match === null) return null
+  const width = Number.parseInt(match[1]!, 10)
+  const height = Number.parseInt(match[2]!, 10)
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return null
+  return { width, height }
 }

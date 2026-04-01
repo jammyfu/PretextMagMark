@@ -1,4 +1,4 @@
-import type { InlineSpan, MarkdownBlock } from '../domain/types'
+import type { ImageFitMode, InlineSpan, MarkdownBlock } from '../domain/types'
 
 export function parseMarkdown(source: string): MarkdownBlock[] {
   const lines = source.replace(/\r\n?/g, '\n').split('\n')
@@ -48,15 +48,18 @@ export function parseMarkdown(source: string): MarkdownBlock[] {
       continue
     }
 
-    const imageMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/)
+    const imageMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)(?:\{([^}]+)\})?$/)
     if (imageMatch !== null) {
       const captionLine = lines[index + 1]?.trim() ?? ''
       const caption = parseCaption(captionLine)
+      const attrs = parseImageAttrs(imageMatch[3] ?? '')
       blocks.push({
         kind: 'image',
         alt: imageMatch[1]!,
         url: imageMatch[2]!.trim(),
         caption: caption ?? undefined,
+        ratio: attrs.ratio,
+        fit: attrs.fit,
       })
       index += caption === null ? 1 : 2
       continue
@@ -119,6 +122,22 @@ export function parseMarkdown(source: string): MarkdownBlock[] {
   }
 
   return blocks
+}
+
+function parseImageAttrs(text: string): { ratio?: string, fit: ImageFitMode } {
+  const result: { ratio?: string, fit: ImageFitMode } = { fit: 'cover' }
+  const matches = text.matchAll(/([a-zA-Z]+)\s*=\s*([^\s}]+)/g)
+  for (const match of matches) {
+    const key = match[1]!.toLowerCase()
+    const value = match[2]!.trim()
+    if (key === 'ratio' && /^\d+:\d+$/.test(value)) {
+      result.ratio = value
+    }
+    if (key === 'fit' && (value === 'cover' || value === 'contain' || value === 'fill')) {
+      result.fit = value
+    }
+  }
+  return result
 }
 
 function parseCaption(line: string): string | null {

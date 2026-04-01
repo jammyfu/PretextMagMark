@@ -5,6 +5,7 @@ export type { LayoutCursor, PreparedTextWithSegments }
 export type PresetKey = 'xiaohongshu' | 'long-image'
 export type ThemeKey = 'berry' | 'ink'
 export type OrnamentKey = 'editorial' | 'minimal'
+export type ImageFitMode = 'cover' | 'contain' | 'fill'
 
 export type InlineStyleName =
   | 'body'
@@ -35,7 +36,7 @@ export type MarkdownBlock =
   | { kind: 'code'; code: string }
   | { kind: 'divider' }
   | { kind: 'page-break' }
-  | { kind: 'image'; alt: string; url: string; caption?: string }
+  | { kind: 'image'; alt: string; url: string; caption?: string; ratio?: string; fit: ImageFitMode }
 
 export type TextStyle = {
   font: string
@@ -117,9 +118,12 @@ export type ImageRow = {
   kind: 'image'
   y: number
   height: number
+  mediaHeight: number
   alt: string
   url: string
   caption?: string
+  ratio?: string
+  fit: ImageFitMode
 }
 
 export type RenderRow = TextRow | DividerRow | PageBreakRow | ImageRow

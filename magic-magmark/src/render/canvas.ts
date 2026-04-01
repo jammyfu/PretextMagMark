@@ -215,26 +215,32 @@ function drawImageRow(
   const imageX = preset.marginX
   const imageY = row.y
   const imageWidth = preset.contentWidth
-  const imageHeight = row.height
+  const mediaHeight = row.mediaHeight
+  const cardHeight = row.height
   const asset = imageAssets.get(row.url)
 
   ctx.save()
-  roundRect(ctx, imageX, imageY, imageWidth, imageHeight, 28)
+  roundRect(ctx, imageX, imageY, imageWidth, cardHeight, 28)
+  ctx.fillStyle = '#fffaf4'
+  ctx.fill()
+
+  ctx.save()
+  roundRect(ctx, imageX, imageY, imageWidth, mediaHeight, 28)
   ctx.clip()
 
   if (asset !== undefined) {
-    drawCoverImage(ctx, asset.image, imageX, imageY, imageWidth, imageHeight)
-    const overlay = ctx.createLinearGradient(0, imageY, 0, imageY + imageHeight)
+    drawPlacedImage(ctx, asset.image, imageX, imageY, imageWidth, mediaHeight, row.fit)
+    const overlay = ctx.createLinearGradient(0, imageY, 0, imageY + mediaHeight)
     overlay.addColorStop(0, 'rgba(10, 10, 10, 0.02)')
     overlay.addColorStop(1, 'rgba(10, 10, 10, 0.18)')
     ctx.fillStyle = overlay
-    ctx.fillRect(imageX, imageY, imageWidth, imageHeight)
+    ctx.fillRect(imageX, imageY, imageWidth, mediaHeight)
   } else {
     ctx.fillStyle = theme.accentFaint
-    ctx.fillRect(imageX, imageY, imageWidth, imageHeight)
+    ctx.fillRect(imageX, imageY, imageWidth, mediaHeight)
     ctx.strokeStyle = theme.rule
     ctx.lineWidth = 2
-    ctx.strokeRect(imageX + 1, imageY + 1, imageWidth - 2, imageHeight - 2)
+    ctx.strokeRect(imageX + 1, imageY + 1, imageWidth - 2, mediaHeight - 2)
     ctx.fillStyle = theme.accent
     ctx.font = `700 24px "Consolas", "SFMono-Regular", ui-monospace, monospace`
     ctx.fillText('IMAGE PLACEHOLDER', imageX + 32, imageY + 54)
@@ -243,27 +249,36 @@ function drawImageRow(
 
   ctx.strokeStyle = theme.rule
   ctx.lineWidth = 2
-  roundRect(ctx, imageX, imageY, imageWidth, imageHeight, 28)
+  roundRect(ctx, imageX, imageY, imageWidth, cardHeight, 28)
   ctx.stroke()
 
-  ctx.fillStyle = asset === undefined ? theme.ink : '#fff7ef'
+  ctx.fillStyle = asset === undefined ? theme.ink : theme.ink
   ctx.font = doc.theme.styles.h3.font
-  ctx.fillText(row.alt.length > 0 ? row.alt : 'No image caption provided', preset.marginX + 32, row.y + 114)
+  ctx.fillText(row.alt.length > 0 ? row.alt : 'No image caption provided', preset.marginX + 32, row.y + mediaHeight + 52)
   ctx.fillStyle = theme.muted
   ctx.font = doc.theme.styles.caption.font
-  const captionText = row.caption ?? row.url
-  wrapCanvasText(ctx, captionText, preset.marginX + 32, row.y + 160, preset.contentWidth - 64, doc.theme.styles.caption.lineHeight)
+  const metaText = [row.caption ?? row.url, row.ratio ?? 'auto', row.fit].join('  |  ')
+  wrapCanvasText(ctx, metaText, preset.marginX + 32, row.y + mediaHeight + 92, preset.contentWidth - 64, doc.theme.styles.caption.lineHeight)
+  ctx.restore()
 }
 
-function drawCoverImage(
+function drawPlacedImage(
   ctx: CanvasRenderingContext2D,
   image: HTMLImageElement,
   x: number,
   y: number,
   width: number,
   height: number,
+  fit: ImageRow['fit'],
 ): void {
-  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight)
+  if (fit === 'fill') {
+    ctx.drawImage(image, x, y, width, height)
+    return
+  }
+
+  const scale = fit === 'contain'
+    ? Math.min(width / image.naturalWidth, height / image.naturalHeight)
+    : Math.max(width / image.naturalWidth, height / image.naturalHeight)
   const drawWidth = image.naturalWidth * scale
   const drawHeight = image.naturalHeight * scale
   const dx = x + (width - drawWidth) / 2

@@ -17,7 +17,7 @@ After that, the page needs a stable reading rhythm. Narrower measures, controlle
 
 >! Design is not decoration alone. It is the choreography of emphasis, silence, and pace.
 
-![Cover study](./cover-study.png)
+![Cover study](./cover-study.png){ratio=4:5 fit=contain}
 *Reference image with a proper caption block.*
 
 <!-- page-break -->
