@@ -19,6 +19,10 @@ export function renderAppShell(): string {
                 Import .md
                 <input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain">
               </label>
+              <label class="file-button secondary">
+                Import images
+                <input id="image-files" type="file" accept="image/*" multiple>
+              </label>
               <button id="sample-button" class="secondary" type="button">Load sample</button>
             </div>
             <label>

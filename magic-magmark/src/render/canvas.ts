@@ -1,9 +1,11 @@
+import type { ImageAssetMap } from '../assets/images'
 import type { ImageRow, OrnamentKey, PageLayout, RenderDocument, TextRow } from '../domain/types'
 
 export function drawPageToCanvas(
   canvas: HTMLCanvasElement,
   page: PageLayout,
   doc: RenderDocument,
+  imageAssets: ImageAssetMap,
   scale: number,
   ornament: OrnamentKey,
 ): void {
@@ -15,7 +17,7 @@ export function drawPageToCanvas(
   const ctx = canvas.getContext('2d')
   if (ctx === null) throw new Error('2D context not available')
   ctx.setTransform(scale, 0, 0, scale, 0, 0)
-  drawPage(ctx, width, height, page, doc, ornament)
+  drawPage(ctx, width, height, page, doc, imageAssets, ornament)
 }
 
 function drawPage(
@@ -24,6 +26,7 @@ function drawPage(
   height: number,
   page: PageLayout,
   doc: RenderDocument,
+  imageAssets: ImageAssetMap,
   ornament: OrnamentKey,
 ): void {
   const { theme, preset } = doc
@@ -68,7 +71,7 @@ function drawPage(
     const row = page.rows[index]!
     if (row.kind === 'text') drawTextRow(ctx, row, doc)
     if (row.kind === 'divider') drawDividerRow(ctx, row, doc)
-    if (row.kind === 'image') drawImageRow(ctx, row, doc)
+    if (row.kind === 'image') drawImageRow(ctx, row, doc, imageAssets)
   }
 
   ctx.fillStyle = theme.muted
@@ -202,25 +205,70 @@ function drawColumnGuides(ctx: CanvasRenderingContext2D, doc: RenderDocument): v
   }
 }
 
-function drawImageRow(ctx: CanvasRenderingContext2D, row: ImageRow, doc: RenderDocument): void {
+function drawImageRow(
+  ctx: CanvasRenderingContext2D,
+  row: ImageRow,
+  doc: RenderDocument,
+  imageAssets: ImageAssetMap,
+): void {
   const { preset, theme } = doc
-  ctx.fillStyle = theme.accentFaint
-  roundRect(ctx, preset.marginX, row.y, preset.contentWidth, row.height, 28)
-  ctx.fill()
+  const imageX = preset.marginX
+  const imageY = row.y
+  const imageWidth = preset.contentWidth
+  const imageHeight = row.height
+  const asset = imageAssets.get(row.url)
+
+  ctx.save()
+  roundRect(ctx, imageX, imageY, imageWidth, imageHeight, 28)
+  ctx.clip()
+
+  if (asset !== undefined) {
+    drawCoverImage(ctx, asset.image, imageX, imageY, imageWidth, imageHeight)
+    const overlay = ctx.createLinearGradient(0, imageY, 0, imageY + imageHeight)
+    overlay.addColorStop(0, 'rgba(10, 10, 10, 0.02)')
+    overlay.addColorStop(1, 'rgba(10, 10, 10, 0.18)')
+    ctx.fillStyle = overlay
+    ctx.fillRect(imageX, imageY, imageWidth, imageHeight)
+  } else {
+    ctx.fillStyle = theme.accentFaint
+    ctx.fillRect(imageX, imageY, imageWidth, imageHeight)
+    ctx.strokeStyle = theme.rule
+    ctx.lineWidth = 2
+    ctx.strokeRect(imageX + 1, imageY + 1, imageWidth - 2, imageHeight - 2)
+    ctx.fillStyle = theme.accent
+    ctx.font = `700 24px "Consolas", "SFMono-Regular", ui-monospace, monospace`
+    ctx.fillText('IMAGE PLACEHOLDER', imageX + 32, imageY + 54)
+  }
+  ctx.restore()
+
   ctx.strokeStyle = theme.rule
   ctx.lineWidth = 2
-  roundRect(ctx, preset.marginX, row.y, preset.contentWidth, row.height, 28)
+  roundRect(ctx, imageX, imageY, imageWidth, imageHeight, 28)
   ctx.stroke()
-  ctx.fillStyle = theme.accent
-  ctx.font = `700 24px "Consolas", "SFMono-Regular", ui-monospace, monospace`
-  ctx.fillText('IMAGE PLACEHOLDER', preset.marginX + 32, row.y + 54)
-  ctx.fillStyle = theme.ink
+
+  ctx.fillStyle = asset === undefined ? theme.ink : '#fff7ef'
   ctx.font = doc.theme.styles.h3.font
   ctx.fillText(row.alt.length > 0 ? row.alt : 'No image caption provided', preset.marginX + 32, row.y + 114)
   ctx.fillStyle = theme.muted
   ctx.font = doc.theme.styles.caption.font
   const captionText = row.caption ?? row.url
   wrapCanvasText(ctx, captionText, preset.marginX + 32, row.y + 160, preset.contentWidth - 64, doc.theme.styles.caption.lineHeight)
+}
+
+function drawCoverImage(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+): void {
+  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight)
+  const drawWidth = image.naturalWidth * scale
+  const drawHeight = image.naturalHeight * scale
+  const dx = x + (width - drawWidth) / 2
+  const dy = y + (height - drawHeight) / 2
+  ctx.drawImage(image, dx, dy, drawWidth, drawHeight)
 }
 
 function wrapCanvasText(

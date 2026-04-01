@@ -1,4 +1,5 @@
 import './styles.css'
+import { countImageRefs, releaseImageAssets, resolveImageAssets } from './assets/images'
 import { SAMPLE_MARKDOWN } from './content/sample'
 import type { OrnamentKey, PresetKey, RenderDocument, ThemeKey } from './domain/types'
 import { canvasToBlob, downloadBlob, escapeHtml, sanitizeStem } from './export/png'
@@ -9,6 +10,7 @@ import { renderAppShell } from './ui/template'
 type DomCache = {
   markdownInput: HTMLTextAreaElement
   fileInput: HTMLInputElement
+  imageFiles: HTMLInputElement
   sampleButton: HTMLButtonElement
   documentName: HTMLInputElement
   presetSelect: HTMLSelectElement
@@ -37,6 +39,9 @@ type State = {
   scale: number
   currentPageIndex: number
   document: RenderDocument | null
+  imageAssets: Awaited<ReturnType<typeof resolveImageAssets>>
+  imageFiles: File[]
+  renderToken: number
 }
 
 const app = document.getElementById('app')
@@ -55,6 +60,9 @@ const st: State = {
   scale: 3,
   currentPageIndex: 0,
   document: null,
+  imageAssets: new Map(),
+  imageFiles: [],
+  renderToken: 0,
 }
 
 dom.markdownInput.value = SAMPLE_MARKDOWN
@@ -66,6 +74,7 @@ function getDom(): DomCache {
   return {
     markdownInput: getRequiredElement('markdown-input', HTMLTextAreaElement),
     fileInput: getRequiredElement('markdown-file', HTMLInputElement),
+    imageFiles: getRequiredElement('image-files', HTMLInputElement),
     sampleButton: getRequiredElement('sample-button', HTMLButtonElement),
     documentName: getRequiredElement('document-name', HTMLInputElement),
     presetSelect: getRequiredElement('preset-select', HTMLSelectElement),
@@ -93,7 +102,9 @@ function getRequiredElement<T extends Element>(id: string, ctor: { new (): T }):
 }
 
 function wireEvents(): void {
-  dom.renderButton.addEventListener('click', () => renderFromState())
+  dom.renderButton.addEventListener('click', () => {
+    void renderFromState()
+  })
 
   dom.sampleButton.addEventListener('click', () => {
     st.source = SAMPLE_MARKDOWN
@@ -101,7 +112,7 @@ function wireEvents(): void {
     st.currentPageIndex = 0
     dom.markdownInput.value = SAMPLE_MARKDOWN
     dom.documentName.value = st.fileStem
-    renderFromState()
+    void renderFromState()
   })
 
   dom.markdownInput.addEventListener('input', () => {
@@ -115,17 +126,17 @@ function wireEvents(): void {
   dom.presetSelect.addEventListener('change', () => {
     st.presetKey = dom.presetSelect.value as PresetKey
     st.currentPageIndex = 0
-    renderFromState()
+    void renderFromState()
   })
 
   dom.themeSelect.addEventListener('change', () => {
     st.themeKey = dom.themeSelect.value as ThemeKey
-    renderFromState()
+    void renderFromState()
   })
 
   dom.ornamentSelect.addEventListener('change', () => {
     st.ornament = dom.ornamentSelect.value as OrnamentKey
-    renderFromState()
+    void renderFromState()
   })
 
   dom.scaleSelect.addEventListener('change', () => {
@@ -163,16 +174,34 @@ function wireEvents(): void {
       st.currentPageIndex = 0
       dom.markdownInput.value = text
       dom.documentName.value = st.fileStem
-      renderFromState()
+      void renderFromState()
     })
+  })
+
+  dom.imageFiles.addEventListener('change', () => {
+    st.imageFiles = Array.from(dom.imageFiles.files ?? [])
+    void renderFromState()
   })
 }
 
-function renderFromState(): void {
+async function renderFromState(): Promise<void> {
+  const renderToken = ++st.renderToken
   st.source = dom.markdownInput.value
   st.fileStem = sanitizeStem(dom.documentName.value)
   st.document = buildRenderDocument(st.source, st.presetKey, st.themeKey)
   st.currentPageIndex = Math.min(st.currentPageIndex, st.document.pages.length - 1)
+  releaseImageAssets(st.imageAssets)
+  st.imageAssets = new Map()
+  paintPreview()
+  syncUi()
+
+  const assets = await resolveImageAssets(st.document, st.imageFiles)
+  if (renderToken !== st.renderToken) {
+    releaseImageAssets(assets)
+    return
+  }
+
+  st.imageAssets = assets
   paintPreview()
   syncUi()
 }
@@ -201,7 +230,8 @@ function syncUi(): void {
     `Grid: ${doc.preset.columnCount} column${doc.preset.columnCount > 1 ? 's' : ''}${doc.preset.columnCount > 1 ? `, ${doc.preset.columnGap}px gap` : ''}`,
     st.presetKey === 'xiaohongshu' ? 'Mode: auto-paginated social cards' : 'Mode: single long image',
     `Export scale: ${st.scale}x`,
-    'Note: Markdown images currently render as placeholders so layout and export can be verified first.',
+    `Images resolved: ${st.imageAssets.size} / ${countImageRefs(doc)}`,
+    'Tip: imported images are matched by file name to Markdown image URLs.',
   ]
   dom.stats.innerHTML = summary.map(item => `<div>${escapeHtml(item)}</div>`).join('')
 }
@@ -211,7 +241,7 @@ function paintPreview(): void {
   if (doc === null) return
   const page = doc.pages[st.currentPageIndex]
   if (page === undefined) return
-  drawPageToCanvas(dom.previewCanvas, page, doc, 1, st.ornament)
+  drawPageToCanvas(dom.previewCanvas, page, doc, st.imageAssets, 1, st.ornament)
 }
 
 async function exportCurrentPage(): Promise<void> {
@@ -220,7 +250,7 @@ async function exportCurrentPage(): Promise<void> {
   const page = doc.pages[st.currentPageIndex]
   if (page === undefined) return
   const canvas = document.createElement('canvas')
-  drawPageToCanvas(canvas, page, doc, st.scale, st.ornament)
+  drawPageToCanvas(canvas, page, doc, st.imageAssets, st.scale, st.ornament)
   const blob = await canvasToBlob(canvas)
   downloadBlob(blob, `${st.fileStem}-${st.currentPageIndex + 1}.png`)
 }
@@ -232,7 +262,7 @@ async function exportAllPages(): Promise<void> {
   for (let index = 0; index < doc.pages.length; index++) {
     const page = doc.pages[index]!
     const canvas = document.createElement('canvas')
-    drawPageToCanvas(canvas, page, doc, st.scale, st.ornament)
+    drawPageToCanvas(canvas, page, doc, st.imageAssets, st.scale, st.ornament)
     const blob = await canvasToBlob(canvas)
     downloadBlob(blob, `${st.fileStem}-${index + 1}.png`)
     if (index < doc.pages.length - 1) {
