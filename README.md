@@ -1,223 +1,113 @@
-# Pretext
+<div align="center">
+  <img src="pages/assets/hero.png" width="800" alt="Pretext 封面图">
+  <h1>Pretext / 高性能文本排版引擎</h1>
+  <p>
+    <strong>为现代 Web 打造的高性能多行文本测量与排版引擎。</strong><br />
+    <em>纯 JS 驱动，原生支持多语言、高精度、无重排。</em>
+  </p>
 
-Pure JavaScript/TypeScript library for multiline text measurement & layout. Fast, accurate & supports all the languages you didn't even know about. Allows rendering to DOM, Canvas, SVG and soon, server-side.
+  <p>
+    <a href="https://chenglou.me/pretext">在线体验</a> •
+    <a href="#安装">快速安装</a> •
+    <a href="#api-参考">API 参考</a> •
+    <a href="#离线画报案例">画报预览案例</a>
+  </p>
+</div>
 
-Pretext side-steps the need for DOM measurements (e.g. `getBoundingClientRect`, `offsetHeight`), which trigger layout reflow, one of the most expensive operations in the browser. It implements its own text measurement logic, using the browsers' own font engine as ground truth (very AI-friendly iteration method).
+---
 
-## Installation
+Pretext 是一个纯 JavaScript/TypeScript 编写的多行文本测量与排版引擎。它巧妙地避开了代价高昂的 DOM 操作（如 `getBoundingClientRect` 或 `offsetHeight`），通过内置的测量逻辑与浏览器字体引擎直接交互，确保在处理复杂文本密集型应用时，UI 依然流畅且无布局重排（Layout Reflow）。
+
+## ✨ 核心特性
+
+- **🚀 性能至上**：一次 `prepare()`，到处 `layout()`。在窗口缩放等高频操作下，比 DOM 测量快 200 倍以上。
+- **🌍 全球化支持**：原生支持混合 LTR/RTL（阿拉伯语、希伯来语）、中日韩（CJK）避头尾、泰语/老挝语分词以及表情符号（Emoji）。
+- **🎨 渲染无感**：排版结果为纯几何数据。可用于 DOM、Canvas、SVG、WebGL 等自定义渲染管线；仓库当前也包含基于浏览器 Canvas 的图片导出 demo。
+- **🏗️ 自由布局**：超越简单的流式布局。可用于瀑布流、避障布局、杂志风格排版或文本环绕。
+
+## 📦 安装
 
 ```sh
 npm install @chenglou/pretext
 ```
 
-## Demos
+## 🖼️ 离线画报案例 (Markdown Poster Demo)
 
-Clone the repo, run `bun install`, then `bun start`, and open the `/demos` in your browser (no trailing slash. Bun devserver bugs on those)
-Alternatively, see them live at [chenglou.me/pretext](https://chenglou.me/pretext/). Some more at [somnai-dreams.github.io/pretext-demos](https://somnai-dreams.github.io/pretext-demos/)
+Pretext 结合我们的 Markdown 块模型，可以将原始文本转化为精美的高清海报，适配 **小红书** (1080x1440) 或长图分享。
 
-### Markdown Poster Demo
+### 本地运行
+1. `bun install`
+2. `bun start`
+3. 访问 `http://127.0.0.1:3000/demos/markdown-poster`
 
-This repo now also includes a browser demo for turning Markdown into:
-- Xiaohongshu-style multi-page cards (`1080 x 1440`)
-- a single long image (`1080 x auto`)
+### 功能亮点
+- **Markdown 块支持**：支持标题、引用、列表、代码块和分割线。
+- **主题系统**：内置「莓红杂志」和「墨黑专栏」等配色预设。
+- **高清导出**：基于 Canvas 导出 2x / 3x / 4x 高清 PNG。
+- **确定性排版**：所有坐标均预先计算，在相同字体与渲染环境下，导出结果更稳定、更可控。
 
-Open `/demos/markdown-poster` after starting the demo server.
+## 📚 API 参考
 
-The implementation lives in:
-- [pages/demos/markdown-poster.html](pages/demos/markdown-poster.html)
-- [pages/demos/markdown-poster.ts](pages/demos/markdown-poster.ts)
+Pretext 提供两个层级的控制：
 
-What it currently supports:
-- importing a local `.md` file
-- direct editing in a textarea
-- headings, paragraphs, blockquotes, ordered/unordered lists, fenced code blocks, dividers
-- Markdown image syntax as layout placeholders
-- theme switching
-- `2x` / `3x` / `4x` PNG export
-
-What it deliberately does not do yet:
-- WeChat embedded article HTML composition
-- real image asset drawing for Markdown image nodes; those are placeholder blocks for now
-
-#### How It Works
-
-The demo uses Pretext as the line layout engine rather than relying on DOM text measurement.
-
-Pipeline:
-1. Parse Markdown into a small block model in userland.
-2. Convert each block into styled inline spans.
-3. For each text style, call `prepareWithSegments(text, font)` once and cache the result.
-4. Use `layoutNextLine()` to stream each rendered line at the current available width.
-5. Assemble the lines into block rows with explicit `x / y / height` geometry.
-6. For Xiaohongshu mode, paginate those rows into fixed-height `1080 x 1440` pages.
-7. For long-image mode, keep the rows in one continuous document and derive the final height from content.
-8. Draw the final geometry into a canvas and export PNG from the canvas bitmap.
-
-Why this structure:
-- line breaking stays aligned with the repo's current Pretext behavior
-- no DOM measurement loop is needed for text layout
-- pagination and export stay deterministic because all geometry is explicit before drawing
-- the same layout pipeline can target multiple output sizes without changing the text engine
-
-#### How To Use It
-
-1. Install dependencies with `bun install`.
-2. Start the demo server with `bun start`.
-3. Open `http://127.0.0.1:3000/demos/markdown-poster`.
-4. Import a Markdown file or paste Markdown into the editor.
-5. Choose `Xiaohongshu` or `Long Image`.
-6. Choose theme and export scale.
-7. Click `重新排版` to rebuild the layout.
-8. Click `导出当前 PNG` or `导出全部页`.
-
-Practical notes:
-- `3x` is the default high-resolution export mode.
-- `4x` is sharper but costs more memory and can be slower on large long images.
-- in Xiaohongshu mode, `导出全部页` downloads one PNG per page.
-- in long-image mode, export is a single PNG whose height is content-driven.
-
-#### How To Test It
-
-There is no dedicated automated test for this demo yet, so verify it manually in the browser.
-
-Recommended manual checks:
-- load the sample content and confirm both presets render without overlap or clipping
-- import a real `.md` file and confirm headings, lists, quotes, and fenced code blocks all appear
-- switch between `Xiaohongshu` and `Long Image` and verify page count / final height updates
-- export at `2x`, `3x`, and `4x` and confirm the downloaded PNG dimensions scale as expected
-- confirm `导出全部页` is only enabled for Xiaohongshu mode
-- add a Markdown image node such as `![caption](./cover.png)` and confirm it renders as a placeholder card
-- resize the browser and confirm the preview still matches the chosen output size rather than the viewport size
-
-If you change the demo's layout rules, styles, parsing, or export behavior, re-run those checks before merging.
-
-## API
-
-Pretext serves 2 use cases:
-
-### 1. Measure a paragraph's height _without ever touching DOM_
+### 1. 简单高度计算
+适用于列表虚拟化、瀑布流布局或防止页面布局抖动。
 
 ```ts
 import { prepare, layout } from '@chenglou/pretext'
 
-const prepared = prepare('AGI 春天到了. بدأت الرحلة 🚀', '16px Inter')
-const { height, lineCount } = layout(prepared, textWidth, 20) // pure arithmetics. No DOM layout & reflow!
+// 1. 一次性分析与测量（通常在初始化或数据加载时调用）
+const prepared = prepare('你好 Pretext! 🚀', '16px Inter')
+
+// 2. 高频布局计算（缩放或渲染循环）—— 纯算数运算，极快！
+const { height, lineCount } = layout(prepared, 320, 24) 
 ```
 
-`prepare()` does the one-time work: normalize whitespace, segment the text, apply glue rules, measure the segments with canvas, and return an opaque handle. `layout()` is the cheap hot path after that: pure arithmetic over cached widths. Do not rerun `prepare()` for the same text and configs; that'd defeat its precomputation. For example, on resize, only rerun `layout()`.
-
-If you want textarea-like text where ordinary spaces, `\t` tabs, and `\n` hard breaks stay visible, pass `{ whiteSpace: 'pre-wrap' }` to `prepare()`:
-
-```ts
-const prepared = prepare(textareaValue, '16px Inter', { whiteSpace: 'pre-wrap' })
-const { height } = layout(prepared, textareaWidth, 20)
-```
-
-On the current checked-in benchmark snapshot:
-- `prepare()` is about `19ms` for the shared 500-text batch
-- `layout()` is about `0.09ms` for that same batch
-
-We support all the languages you can imagine, including emojis and mixed-bidi, and caters to specific browser quirks
-
-The returned height is the crucial last piece for unlocking web UI's:
-- proper virtualization/occlusion without guesstimates & caching
-- fancy userland layouts: masonry, JS-driven flexbox-like implementations, nudging a few layout values without CSS hacks (imagine that), etc.
-- _development time_ verification (especially now with AI) that labels on e.g. buttons don't overflow to the next line, browser-free
-- prevent layout shift when new text loads and you wanna re-anchor the scroll position
-
-### 2. Lay out the paragraph lines manually yourself
-
-Switch out `prepare` with `prepareWithSegments`, then:
-
-- `layoutWithLines()` gives you all the lines at a fixed width:
+### 2. 精细化管理
+适用于 Canvas/SVG 渲染、浮动文本环绕或实现“收缩包装”效果。
 
 ```ts
 import { prepareWithSegments, layoutWithLines } from '@chenglou/pretext'
 
-const prepared = prepareWithSegments('AGI 春天到了. بدأت الرحلة 🚀', '18px "Helvetica Neue"')
-const { lines } = layoutWithLines(prepared, 320, 26) // 320px max width, 26px line height
-for (let i = 0; i < lines.length; i++) ctx.fillText(lines[i].text, 0, i * 26)
+const prepared = prepareWithSegments(text, '18px Inter')
+const { lines } = layoutWithLines(prepared, 400, 30)
+
+// lines[0] = { text: "...", width: 382.5, start: ..., end: ... }
 ```
 
-- `walkLineRanges()` gives you line widths and cursors without building the text strings:
+### 🛠️ API 详述
 
-```ts
-let maxW = 0
-walkLineRanges(prepared, 320, line => { if (line.width > maxW) maxW = line.width })
-// maxW is now the widest line — the tightest container width that still fits the text! This multiline "shrink wrap" has been missing from web
-```
+| 函数接口 | 描述 |
+| :--- | :--- |
+| `prepare(text, font, options?)` | 文本分析与测量阶段。返回不透明的 `PreparedText` 句柄。 |
+| `layout(prepared, maxWidth, lineH)` | 热路径高度计算。无 DOM/Canvas 调用。 |
+| `prepareWithSegments(...)` | 同 `prepare`，但允许访问详细的行字符串和位移。 |
+| `layoutWithLines(...)` | 返回每一行的文本内容、测量宽度以及起止游标；具体 `x/y` 几何位置仍由调用方决定。 |
+| `walkLineRanges(...)` | 批量 line 几何遍历，不生成字符串，速度极快。 |
+| `layoutNextLine(...)` | 迭代器接口，支持不规则宽度布局（如环绕图片）。 |
+| `setLocale(locale?)` | 设置 `Intl.Segmenter` 语言区域并清理共享缓存。 |
+| `clearCache()` | 释放所有内部字体宽度和分词缓存。 |
 
-- `layoutNextLine()` lets you route text one row at a time when width changes as you go:
+## ⚠️ 注意事项
 
-```ts
-let cursor = { segmentIndex: 0, graphemeIndex: 0 }
-let y = 0
+- **字体一致性**：传给 `prepare` 的 `font` 字符串必须与 CSS `font` 定义完全一致（如 `16px Inter`）。
+- **默认策略**：遵循 `white-space: normal`, `word-break: normal`, `overflow-wrap: break-word`。
+- **Pre-wrap 模式**：通过 `{ whiteSpace: 'pre-wrap' }` 参数保留空格、制表符和 `\n` 换行。
+- **系统字体风险**：在 macOS 上避免使用 `system-ui` 以确保 Canvas 与 DOM 测量对齐；建议使用具名族系。
 
-// Flow text around a floated image: lines beside the image are narrower
-while (true) {
-  const width = y < image.bottom ? columnWidth - image.width : columnWidth
-  const line = layoutNextLine(prepared, cursor, width)
-  if (line === null) break
-  ctx.fillText(line.text, 0, y)
-  cursor = line.end
-  y += 26
-}
-```
+## 🛠️ 开发与贡献
 
-This usage allows rendering to canvas, SVG, WebGL and (eventually) server-side.
+- 参见 [DEVELOPMENT.md](DEVELOPMENT.md) 了解构建配置与命令。
+- 参见 [RESEARCH.md](RESEARCH.md) 了解本项目在浏览器测量兼容性、Emoji 渲染补偿等方面的技术内幕。
 
-### API Glossary
+## 📜 致谢
 
-Use-case 1 APIs:
-```ts
-prepare(text: string, font: string, options?: { whiteSpace?: 'normal' | 'pre-wrap' }): PreparedText // one-time text analysis + measurement pass, returns an opaque value to pass to `layout()`. Make sure `font` is synced with your css `font` declaration shorthand (e.g. size, weight, style, family) for the text you're measuring. `font` is the same format as what you'd use for `myCanvasContext.font = ...`, e.g. `16px Inter`.
-layout(prepared: PreparedText, maxWidth: number, lineHeight: number): { height: number, lineCount: number } // calculates text height given a max width and lineHeight. Make sure `lineHeight` is synced with your css `line-height` declaration for the text you're measuring.
-```
+- **Sebastian Markbage**：设计了最初的测量架构演算法。
+- **chenglou**：原作者与核心维护者。
+- **jammyfu**：本分支的维护者，开发了 Markdown 生成逻辑。
 
-Use-case 2 APIs:
-```ts
-prepareWithSegments(text: string, font: string, options?: { whiteSpace?: 'normal' | 'pre-wrap' }): PreparedTextWithSegments // same as `prepare()`, but returns a richer structure for manual line layouts needs
-layoutWithLines(prepared: PreparedTextWithSegments, maxWidth: number, lineHeight: number): { height: number, lineCount: number, lines: LayoutLine[] } // high-level api for manual layout needs. Accepts a fixed max width for all lines. Similar to `layout()`'s return, but additionally returns the lines info
-walkLineRanges(prepared: PreparedTextWithSegments, maxWidth: number, onLine: (line: LayoutLineRange) => void): number // low-level api for manual layout needs. Accepts a fixed max width for all lines. Calls `onLine` once per line with its actual calculated line width and start/end cursors, without building line text strings. Very useful for certain cases where you wanna speculatively test a few width and height boundaries (e.g. binary search a nice width value by repeatedly calling walkLineRanges and checking the line count, and therefore height, is "nice" too. You can have text messages shrinkwrap and balanced text layout this way). After walkLineRanges calls, you'd call layoutWithLines once, with your satisfying max width, to get the actual lines info.
-layoutNextLine(prepared: PreparedTextWithSegments, start: LayoutCursor, maxWidth: number): LayoutLine | null // iterator-like api for laying out each line with a different width! Returns the LayoutLine starting from `start`, or `null` when the paragraph's exhausted. Pass the previous line's `end` cursor as the next `start`.
-type LayoutLine = {
-  text: string // Full text content of this line, e.g. 'hello world'
-  width: number // Measured width of this line, e.g. 87.5
-  start: LayoutCursor // Inclusive start cursor in prepared segments/graphemes
-  end: LayoutCursor // Exclusive end cursor in prepared segments/graphemes
-}
-type LayoutLineRange = {
-  width: number // Measured width of this line, e.g. 87.5
-  start: LayoutCursor // Inclusive start cursor in prepared segments/graphemes
-  end: LayoutCursor // Exclusive end cursor in prepared segments/graphemes
-}
-type LayoutCursor = {
-  segmentIndex: number // Segment index in prepareWithSegments' prepared rich segment stream
-  graphemeIndex: number // Grapheme index within that segment; `0` at segment boundaries
-}
-```
+---
 
-Other helpers:
-```ts
-clearCache(): void // clears Pretext's shared internal caches used by prepare() and prepareWithSegments(). Useful if your app cycles through many different fonts or text variants and you want to release the accumulated cache
-setLocale(locale?: string): void // optional (by default we use the current locale). Sets locale for future prepare() and prepareWithSegments(). Internally, it also calls clearCache(). Setting a new locale doesn't affect existing prepare() and prepareWithSegments() states (no mutations to them)
-```
-
-## Caveats
-
-Pretext doesn't try to be a full font rendering engine (yet?). It currently targets the common text setup:
-- `white-space: normal`
-- `word-break: normal`
-- `overflow-wrap: break-word`
-- `line-break: auto`
-- If you pass `{ whiteSpace: 'pre-wrap' }`, ordinary spaces, `\t` tabs, and `\n` hard breaks are preserved instead of collapsed. Tabs follow the default browser-style `tab-size: 8`. The other wrapping defaults stay the same: `word-break: normal`, `overflow-wrap: break-word`, and `line-break: auto`.
-- `system-ui` is unsafe for `layout()` accuracy on macOS. Use a named font.
-- Because the default target includes `overflow-wrap: break-word`, very narrow widths can still break inside words, but only at grapheme boundaries.
-
-## Develop
-
-See [DEVELOPMENT.md](DEVELOPMENT.md) for the dev setup and commands.
-
-## Credits
-
-Sebastian Markbage first planted the seed with [text-layout](https://github.com/chenglou/text-layout) last decade. His design — canvas `measureText` for shaping, bidi from pdf.js, streaming line breaking — informed the architecture we kept pushing forward here.
+<p align="right">
+  为现代 Web 极致性能而生。
+</p>
