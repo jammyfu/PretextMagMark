@@ -129,8 +129,15 @@ export type ImageRow = {
 export type RenderRow = TextRow | DividerRow | PageBreakRow | ImageRow
 
 export type PageLayout = {
+  kind?: 'content' | 'cover'
   rows: RenderRow[]
   height: number
+  cover?: {
+    title: string
+    dek?: string
+    kicker?: string
+    imageUrl?: string
+  }
 }
 
 export type RenderDocument = {

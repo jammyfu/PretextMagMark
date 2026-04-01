@@ -1,5 +1,6 @@
 import { layoutStyledSpans, measureSingleLine } from '../adapters/pretext'
 import type {
+  InlineSpan,
   InlineStyleName,
   MarkdownBlock,
   PageLayout,
@@ -23,9 +24,10 @@ export function buildRenderDocument(source: string, presetKey: PresetKey, themeK
   const preset = getPreset(presetKey)
   const theme = getTheme(themeKey)
   const blocks = parseMarkdown(source)
-  const pages = preset.pageHeight === null
+  const contentPages = preset.pageHeight === null
     ? buildLongImagePages(blocks, preset, theme)
     : composePagedLayout(blocks, preset, theme)
+  const pages = preset.pageHeight === null ? contentPages : prependCoverPage(blocks, preset, contentPages)
 
   return {
     preset,
@@ -39,9 +41,35 @@ export function buildRenderDocument(source: string, presetKey: PresetKey, themeK
 function buildLongImagePages(blocks: MarkdownBlock[], preset: Preset, theme: Theme): PageLayout[] {
   const rows = layoutBlocks(blocks, preset, theme)
   return [{
+    kind: 'content',
     rows: rows.filter(row => row.kind !== 'page-break').map(cloneRow),
     height: Math.max(rows.length === 0 ? 960 : computeDocumentHeight(rows) + preset.bottomInset, 960),
   }]
+}
+
+function prependCoverPage(blocks: MarkdownBlock[], preset: Preset, pages: PageLayout[]): PageLayout[] {
+  const cover = extractCoverData(blocks)
+  if (cover === null) return pages
+  return [{
+    kind: 'cover',
+    rows: [],
+    height: preset.pageHeight ?? 1440,
+    cover,
+  }, ...pages]
+}
+
+function extractCoverData(blocks: MarkdownBlock[]): PageLayout['cover'] | null {
+  const title = blocks.find((block): block is Extract<MarkdownBlock, { kind: 'heading' }> => block.kind === 'heading' && block.depth === 1)
+  if (title === undefined) return null
+  const dek = blocks.find((block): block is Extract<MarkdownBlock, { kind: 'paragraph' }> => block.kind === 'paragraph')
+  const kicker = blocks.find((block): block is Extract<MarkdownBlock, { kind: 'heading' }> => block.kind === 'heading' && block.depth === 4)
+  const image = blocks.find((block): block is Extract<MarkdownBlock, { kind: 'image' }> => block.kind === 'image')
+  return {
+    title: flattenSpans(title.spans),
+    dek: dek === undefined ? undefined : flattenSpans(dek.spans),
+    kicker: kicker === undefined ? undefined : flattenSpans(kicker.spans),
+    imageUrl: image?.url,
+  }
 }
 
 function layoutBlocks(blocks: MarkdownBlock[], preset: Preset, theme: Theme): RenderRow[] {
@@ -418,6 +446,7 @@ function fitsOnPage(nextY: number, preset: Preset): boolean {
 
 function pushPage(pages: PageLayout[], rows: RenderRow[], height: number): void {
   pages.push({
+    kind: 'content',
     rows: rows.map(cloneRow),
     height,
   })
@@ -528,4 +557,8 @@ function parseRatio(ratio: string | undefined): { width: number, height: number 
   const height = Number.parseInt(match[2]!, 10)
   if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return null
   return { width, height }
+}
+
+function flattenSpans(spans: InlineSpan[]): string {
+  return spans.map(span => span.text).join('').trim()
 }

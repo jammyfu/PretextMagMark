@@ -30,6 +30,11 @@ function drawPage(
   ornament: OrnamentKey,
 ): void {
   const { theme, preset } = doc
+  if (page.kind === 'cover' && page.cover !== undefined) {
+    drawCoverPage(ctx, width, height, page, doc, imageAssets, ornament)
+    return
+  }
+
   ctx.clearRect(0, 0, width, height)
   ctx.fillStyle = theme.background
   ctx.fillRect(0, 0, width, height)
@@ -77,6 +82,76 @@ function drawPage(
   ctx.fillStyle = theme.muted
   ctx.font = `500 18px "PingFang SC", "Segoe UI", sans-serif`
   ctx.fillText('Magazine blocks | Pretext layout | Canvas export', preset.marginX, height - 54)
+}
+
+function drawCoverPage(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  page: PageLayout,
+  doc: RenderDocument,
+  imageAssets: ImageAssetMap,
+  ornament: OrnamentKey,
+): void {
+  const { preset, theme } = doc
+  const cover = page.cover!
+  ctx.clearRect(0, 0, width, height)
+
+  const bg = ctx.createLinearGradient(0, 0, width, height)
+  bg.addColorStop(0, theme.background)
+  bg.addColorStop(1, theme.pageEdge)
+  ctx.fillStyle = bg
+  ctx.fillRect(0, 0, width, height)
+
+  const imageUrl = cover.imageUrl
+  const coverAsset = imageUrl === undefined ? undefined : imageAssets.get(imageUrl)
+  if (coverAsset !== undefined) {
+    ctx.save()
+    roundRect(ctx, 54, 54, width - 108, height - 108, 42)
+    ctx.clip()
+    drawPlacedImage(ctx, coverAsset.image, 54, 54, width - 108, height - 108, 'cover')
+    const veil = ctx.createLinearGradient(0, 54, 0, height - 54)
+    veil.addColorStop(0, 'rgba(24, 18, 16, 0.15)')
+    veil.addColorStop(1, 'rgba(24, 18, 16, 0.62)')
+    ctx.fillStyle = veil
+    ctx.fillRect(54, 54, width - 108, height - 108)
+    ctx.restore()
+  } else {
+    ctx.fillStyle = theme.pageFill
+    roundRect(ctx, 54, 54, width - 108, height - 108, 42)
+    ctx.fill()
+  }
+
+  ctx.strokeStyle = theme.rule
+  ctx.lineWidth = 2
+  roundRect(ctx, 54, 54, width - 108, height - 108, 42)
+  ctx.stroke()
+
+  ctx.fillStyle = coverAsset === undefined ? theme.accent : '#fff4ea'
+  ctx.font = `700 18px "PingFang SC", "Segoe UI", sans-serif`
+  const kicker = cover.kicker ?? (ornament === 'editorial' ? 'EDITORIAL ISSUE' : 'MAGIC MAGMARK')
+  ctx.fillText(kicker.toUpperCase(), preset.marginX, 164)
+
+  const titleLines = wrapTextLines(ctx, cover.title, theme.styles.h1.font, preset.contentWidth - 80)
+  ctx.font = theme.styles.h1.font
+  ctx.fillStyle = coverAsset === undefined ? theme.ink : '#fff8f0'
+  for (let index = 0; index < titleLines.length; index++) {
+    ctx.fillText(titleLines[index]!, preset.marginX, 310 + index * theme.styles.h1.lineHeight)
+  }
+
+  if (cover.dek !== undefined) {
+    const dekY = 310 + titleLines.length * theme.styles.h1.lineHeight + 46
+    const dekLines = wrapTextLines(ctx, cover.dek, theme.styles.lead.font, preset.contentWidth - 140)
+    ctx.font = theme.styles.lead.font
+    ctx.fillStyle = coverAsset === undefined ? theme.muted : '#f3dfd0'
+    for (let index = 0; index < dekLines.length; index++) {
+      ctx.fillText(dekLines[index]!, preset.marginX, dekY + index * theme.styles.lead.lineHeight)
+    }
+  }
+
+  ctx.fillStyle = coverAsset === undefined ? theme.muted : '#f3dfd0'
+  ctx.font = `600 18px "Consolas", "SFMono-Regular", ui-monospace, monospace`
+  ctx.fillText('PRETEXT CORE  |  MAGMARK APP  |  HI-RES EXPORT', preset.marginX, height - 114)
 }
 
 function drawTextRow(ctx: CanvasRenderingContext2D, row: TextRow, doc: RenderDocument): void {
@@ -309,6 +384,25 @@ function wrapCanvasText(
     }
   }
   if (line.length > 0) ctx.fillText(line, x, y + lineIndex * lineHeight)
+}
+
+function wrapTextLines(ctx: CanvasRenderingContext2D, text: string, font: string, maxWidth: number): string[] {
+  ctx.font = font
+  const words = text.split(/\s+/)
+  const lines: string[] = []
+  let line = ''
+  for (let index = 0; index < words.length; index++) {
+    const word = words[index]!
+    const candidate = line.length === 0 ? word : `${line} ${word}`
+    if (ctx.measureText(candidate).width > maxWidth && line.length > 0) {
+      lines.push(line)
+      line = word
+    } else {
+      line = candidate
+    }
+  }
+  if (line.length > 0) lines.push(line)
+  return lines
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number): void {
