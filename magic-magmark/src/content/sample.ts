@@ -31,6 +31,8 @@ When each layer has a purpose, the page begins to feel published.
 
 When subheads, lists, and body copy start to negotiate real column widths, the composition becomes more disciplined. Readers can scan, pause, and re-enter without losing the thread.
 
+A longer editorial paragraph is also a good test of whether the system behaves with restraint. If there are only one or two lines left in the current column, the text should not feel stranded. It should either complete the thought cleanly or continue with enough presence in the next column that the reader still feels a continuous pace instead of a mechanical break. That small detail is one of the places where a layout starts to feel edited instead of merely rendered.
+
 - narrower measures slow the eye just enough
 - stronger hierarchy creates editorial confidence
 - a two-column flow makes supporting details easier to stage

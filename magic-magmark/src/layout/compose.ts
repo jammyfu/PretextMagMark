@@ -255,6 +255,32 @@ function composePagedLayout(blocks: MarkdownBlock[], preset: Preset, theme: Them
           break
         }
 
+        if (block.kind === 'paragraph') {
+          const split = splitParagraphRows(placed.rows, pageHeight - preset.bottomInset)
+          if (split !== null) {
+            currentRows.push(...split.head)
+            columnBottoms[currentColumn] = getRowsBottom(split.head)
+
+            if (currentColumn < preset.columnCount - 1) {
+              currentColumn++
+              columnBottoms[currentColumn] = Math.max(columnBottoms[currentColumn]!, columnTop)
+            } else {
+              pushPage(pages, currentRows, pageHeight)
+              currentRows = []
+              currentColumn = 0
+              columnTop = preset.topInset
+              columnBottoms = createColumnBottoms(preset, preset.topInset)
+            }
+
+            const continuationX = getColumnX(preset, currentColumn)
+            const continuationY = Math.max(columnTop, columnBottoms[currentColumn]!)
+            const continuationRows = rebaseTextRows(split.tail, continuationX, continuationY)
+            currentRows.push(...continuationRows)
+            columnBottoms[currentColumn] = getRowsBottom(continuationRows)
+            break
+          }
+        }
+
         if (currentColumn < preset.columnCount - 1) {
           currentColumn++
           columnBottoms[currentColumn] = Math.max(columnBottoms[currentColumn]!, columnTop)
@@ -352,6 +378,39 @@ function getColumnX(preset: Preset, columnIndex: number): number {
   return preset.marginX + columnIndex * (getColumnWidth(preset) + preset.columnGap)
 }
 
+function splitParagraphRows(rows: RenderRow[], bottom: number): { head: TextRow[], tail: TextRow[] } | null {
+  if (rows.length === 0 || rows.some(row => row.kind !== 'text')) return null
+  const textRows = rows as TextRow[]
+  let fitCount = 0
+  for (let index = 0; index < textRows.length; index++) {
+    const row = textRows[index]!
+    if (row.y + row.height <= bottom) fitCount++
+  }
+
+  const minLines = 2
+  if (fitCount < minLines) return null
+  if (textRows.length - fitCount < minLines) {
+    fitCount = textRows.length - minLines
+  }
+  if (fitCount < minLines) return null
+
+  return {
+    head: textRows.slice(0, fitCount).map(cloneTextRow),
+    tail: textRows.slice(fitCount).map(cloneTextRow),
+  }
+}
+
+function rebaseTextRows(rows: TextRow[], x: number, y: number): TextRow[] {
+  if (rows.length === 0) return []
+  const originX = Math.min(...rows.map(row => row.x))
+  const originY = rows[0]!.y
+  return rows.map(row => ({
+    ...cloneTextRow(row),
+    x: row.x - originX + x,
+    y: row.y - originY + y,
+  }))
+}
+
 function fitsOnPage(nextY: number, preset: Preset): boolean {
   const pageHeight = preset.pageHeight
   return pageHeight === null || nextY <= pageHeight - preset.bottomInset
@@ -362,6 +421,10 @@ function pushPage(pages: PageLayout[], rows: RenderRow[], height: number): void 
     rows: rows.map(cloneRow),
     height,
   })
+}
+
+function getRowsBottom(rows: TextRow[]): number {
+  return rows[rows.length - 1]!.y + rows[rows.length - 1]!.height
 }
 
 function createTextRows(
@@ -434,6 +497,19 @@ function cloneRow(row: RenderRow): RenderRow {
         fragments: row.fragments.map(fragment => ({ ...fragment })),
         tone: row.tone,
       }
+  }
+}
+
+function cloneTextRow(row: TextRow): TextRow {
+  return {
+    kind: 'text',
+    x: row.x,
+    y: row.y,
+    height: row.height,
+    lineWidth: row.lineWidth,
+    prefix: row.prefix === undefined ? undefined : { ...row.prefix },
+    fragments: row.fragments.map(fragment => ({ ...fragment })),
+    tone: row.tone,
   }
 }
 
