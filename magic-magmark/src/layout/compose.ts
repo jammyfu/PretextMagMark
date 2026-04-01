@@ -69,12 +69,12 @@ function layoutBlock(
 ): { rows: RenderRow[], nextY: number } {
   switch (block.kind) {
     case 'heading': {
-      const styleName = block.depth === 1 ? 'h1' : block.depth === 2 ? 'h2' : 'h3'
-      const gapBefore = context.previous === null ? 0 : theme.rhythm.sectionGap + (block.depth === 1 ? 6 : 0)
+      const styleName = block.depth === 1 ? 'h1' : block.depth === 2 ? 'h2' : block.depth === 3 ? 'h3' : 'eyebrow'
+      const gapBefore = context.previous === null ? 0 : theme.rhythm.sectionGap + (block.depth === 1 ? 6 : block.depth === 4 ? -4 : 0)
       const lines = layoutStyledSpans(block.spans, styleName, maxWidth, theme)
       const rows = createTextRows(lines, x, startY + gapBefore, theme, styleName)
       const endY = rows.length === 0 ? startY + gapBefore : rows[rows.length - 1]!.y + rows[rows.length - 1]!.height
-      return { rows, nextY: endY + (block.depth === 1 ? 20 : theme.rhythm.compactGap) }
+      return { rows, nextY: endY + (block.depth === 1 ? 20 : block.depth === 4 ? 8 : theme.rhythm.compactGap) }
     }
 
     case 'paragraph': {

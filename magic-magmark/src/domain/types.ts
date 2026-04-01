@@ -27,7 +27,7 @@ export type InlineSpan = {
 }
 
 export type MarkdownBlock =
-  | { kind: 'heading'; depth: 1 | 2 | 3; spans: InlineSpan[] }
+  | { kind: 'heading'; depth: 1 | 2 | 3 | 4; spans: InlineSpan[] }
   | { kind: 'paragraph'; spans: InlineSpan[] }
   | { kind: 'blockquote'; spans: InlineSpan[] }
   | { kind: 'pull-quote'; spans: InlineSpan[] }

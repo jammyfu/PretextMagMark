@@ -31,11 +31,11 @@ export function parseMarkdown(source: string): MarkdownBlock[] {
       continue
     }
 
-    const headingMatch = line.match(/^(#{1,3})\s+(.+)$/)
+    const headingMatch = line.match(/^(#{1,4})\s+(.+)$/)
     if (headingMatch !== null) {
       blocks.push({
         kind: 'heading',
-        depth: headingMatch[1]!.length as 1 | 2 | 3,
+        depth: headingMatch[1]!.length as 1 | 2 | 3 | 4,
         spans: parseInline(headingMatch[2]!),
       })
       index++
@@ -103,7 +103,7 @@ export function parseMarkdown(source: string): MarkdownBlock[] {
         currentTrimmed.length === 0 ||
         currentTrimmed === '<!-- page-break -->' ||
         /^```/.test(currentTrimmed) ||
-        /^(#{1,3})\s+/.test(currentTrimmed) ||
+        /^(#{1,4})\s+/.test(currentTrimmed) ||
         /^>!?\s?/.test(currentTrimmed) ||
         /^([-*_])(?:\s*\1){2,}\s*$/.test(currentTrimmed) ||
         /^\s*((?:[-*+])|\d+\.)\s+/.test(current) ||

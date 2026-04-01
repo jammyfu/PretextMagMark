@@ -22,6 +22,8 @@ After that, the page needs a stable reading rhythm. Narrower measures, controlle
 
 <!-- page-break -->
 
+#### Editorial pacing
+
 ### Why it matters
 
 When text blocks all share the same visual weight, the layout feels like a demo.
