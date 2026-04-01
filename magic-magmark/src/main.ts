@@ -1,7 +1,7 @@
 import './styles.css'
 import { countImageRefs, releaseImageAssets, resolveImageAssets } from './assets/images'
 import { SAMPLE_MARKDOWN } from './content/sample'
-import type { CoverTemplateKey, DensityKey, FontPackKey, OrnamentKey, PresetKey, RenderDocument, ThemeKey } from './domain/types'
+import type { CoverTemplateKey, DensityKey, FontPackKey, LanguageModeKey, OrnamentKey, PresetKey, RenderDocument, ThemeKey } from './domain/types'
 import { canvasToBlob, downloadBlob, escapeHtml, sanitizeStem } from './export/png'
 import { buildRenderDocument } from './layout/compose'
 import { drawPageToCanvas } from './render/canvas'
@@ -16,6 +16,7 @@ type DomCache = {
   presetSelect: HTMLSelectElement
   themeSelect: HTMLSelectElement
   fontPackSelect: HTMLSelectElement
+  languageModeSelect: HTMLSelectElement
   densitySelect: HTMLSelectElement
   scaleSelect: HTMLSelectElement
   ornamentSelect: HTMLSelectElement
@@ -39,6 +40,7 @@ type State = {
   presetKey: PresetKey
   themeKey: ThemeKey
   fontPackKey: FontPackKey
+  languageMode: LanguageModeKey
   densityKey: DensityKey
   ornament: OrnamentKey
   coverTemplate: CoverTemplateKey
@@ -63,6 +65,7 @@ const st: State = {
   presetKey: 'xiaohongshu',
   themeKey: 'berry',
   fontPackKey: 'serif-cn',
+  languageMode: 'mixed',
   densityKey: 'balanced',
   ornament: 'editorial',
   coverTemplate: 'portrait',
@@ -89,6 +92,7 @@ function getDom(): DomCache {
     presetSelect: getRequiredElement('preset-select', HTMLSelectElement),
     themeSelect: getRequiredElement('theme-select', HTMLSelectElement),
     fontPackSelect: getRequiredElement('font-pack-select', HTMLSelectElement),
+    languageModeSelect: getRequiredElement('language-mode-select', HTMLSelectElement),
     densitySelect: getRequiredElement('density-select', HTMLSelectElement),
     scaleSelect: getRequiredElement('scale-select', HTMLSelectElement),
     ornamentSelect: getRequiredElement('ornament-select', HTMLSelectElement),
@@ -148,6 +152,11 @@ function wireEvents(): void {
 
   dom.fontPackSelect.addEventListener('change', () => {
     st.fontPackKey = dom.fontPackSelect.value as FontPackKey
+    void renderFromState()
+  })
+
+  dom.languageModeSelect.addEventListener('change', () => {
+    st.languageMode = dom.languageModeSelect.value as LanguageModeKey
     void renderFromState()
   })
 
@@ -215,7 +224,15 @@ async function renderFromState(): Promise<void> {
   const renderToken = ++st.renderToken
   st.source = dom.markdownInput.value
   st.fileStem = sanitizeStem(dom.documentName.value)
-  st.document = buildRenderDocument(st.source, st.presetKey, st.themeKey, st.coverTemplate, st.fontPackKey, st.densityKey)
+  st.document = buildRenderDocument(
+    st.source,
+    st.presetKey,
+    st.themeKey,
+    st.coverTemplate,
+    st.fontPackKey,
+    st.densityKey,
+    st.languageMode,
+  )
   st.currentPageIndex = Math.min(st.currentPageIndex, st.document.pages.length - 1)
   releaseImageAssets(st.imageAssets)
   st.imageAssets = new Map()
@@ -257,6 +274,7 @@ function syncUi(): void {
     `Grid: ${doc.preset.columnCount} column${doc.preset.columnCount > 1 ? 's' : ''}${doc.preset.columnCount > 1 ? `, ${doc.preset.columnGap}px gap` : ''}`,
     st.presetKey === 'xiaohongshu' ? 'Mode: auto-paginated social cards' : 'Mode: single long image',
     `Font pack: ${st.fontPackKey}`,
+    `Language: ${st.languageMode}`,
     `Density: ${st.densityKey}`,
     `Cover template: ${st.coverTemplate}`,
     `Export scale: ${st.scale}x`,

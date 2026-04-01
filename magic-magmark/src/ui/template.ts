@@ -59,6 +59,15 @@ export function renderAppShell(): string {
                   <option value="serif-cn">Source Han Serif</option>
                   <option value="songti">Songti Review</option>
                   <option value="sans-editorial">Sans Editorial</option>
+                  <option value="serif-en">English Serif</option>
+                </select>
+              </label>
+              <label>
+                Language
+                <select id="language-mode-select">
+                  <option value="mixed" selected>Mixed</option>
+                  <option value="zh">中文</option>
+                  <option value="en">English</option>
                 </select>
               </label>
               <label>

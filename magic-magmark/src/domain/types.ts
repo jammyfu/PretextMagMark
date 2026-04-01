@@ -6,8 +6,9 @@ export type PresetKey = 'xiaohongshu' | 'long-image'
 export type ThemeKey = 'berry' | 'ink' | 'forest'
 export type OrnamentKey = 'editorial' | 'minimal'
 export type CoverTemplateKey = 'portrait' | 'feature-split'
-export type FontPackKey = 'serif-cn' | 'songti' | 'sans-editorial'
+export type FontPackKey = 'serif-cn' | 'songti' | 'sans-editorial' | 'serif-en'
 export type DensityKey = 'airy' | 'balanced' | 'compact'
+export type LanguageModeKey = 'zh' | 'en' | 'mixed'
 export type ImageFitMode = 'cover' | 'contain' | 'fill'
 
 export type InlineStyleName =

@@ -1,8 +1,9 @@
-import { layoutNextLine, prepareWithSegments } from '../../../src/layout.js'
+import { layoutNextLine, prepareWithSegments, setLocale } from '../../../src/layout.js'
 import type {
   InlineSpan,
   InlineStyleName,
   LayoutCursor,
+  LanguageModeKey,
   PreparedLine,
   PreparedLineFragment,
   PreparedTextWithSegments,
@@ -13,6 +14,15 @@ import type {
 const preparedCache = new Map<string, PreparedTextWithSegments>()
 const collapsedSpaceWidthCache = new Map<string, number>()
 const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+let currentLanguageMode: LanguageModeKey = 'mixed'
+
+export function configureLanguageMode(languageMode: LanguageModeKey): void {
+  if (currentLanguageMode === languageMode) return
+  currentLanguageMode = languageMode
+  preparedCache.clear()
+  collapsedSpaceWidthCache.clear()
+  setLocale(resolveLocale(languageMode))
+}
 
 export function layoutStyledSpans(
   spans: InlineSpan[],
@@ -169,7 +179,7 @@ function resolveStyleName(base: InlineStyleName, inline: InlineSpan['style']): I
 }
 
 function getPrepared(text: string, font: string): PreparedTextWithSegments {
-  const key = `${font}\n${text}`
+  const key = `${currentLanguageMode}\n${font}\n${text}`
   const cached = preparedCache.get(key)
   if (cached !== undefined) return cached
   const prepared = prepareWithSegments(text, font)
@@ -219,5 +229,17 @@ function tokenizeSpanText(text: string): Array<{ kind: 'space' } | { kind: 'text
 }
 
 function shouldSegmentForIdeographicJustification(text: string): boolean {
+  if (currentLanguageMode === 'en') return false
   return !/\s/.test(text) && /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(text)
+}
+
+function resolveLocale(languageMode: LanguageModeKey): string | undefined {
+  switch (languageMode) {
+    case 'zh':
+      return 'zh-CN'
+    case 'en':
+      return 'en-US'
+    default:
+      return undefined
+  }
 }

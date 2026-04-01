@@ -1,6 +1,7 @@
 import type {
   DensityKey,
   FontPackKey,
+  LanguageModeKey,
   Preset,
   PresetKey,
   TextStyle,
@@ -125,6 +126,13 @@ const FONT_PACKS: Record<FontPackKey, FontPack> = {
     mono: '"IBM Plex Mono", "Cascadia Code", "Consolas", monospace',
     display: '"IBM Plex Sans", "Avenir Next", "PingFang SC", sans-serif',
   },
+  'serif-en': {
+    name: 'English Serif',
+    body: '"Iowan Old Style", "Baskerville", "Georgia", serif',
+    sans: '"Avenir Next", "Helvetica Neue", "Segoe UI", sans-serif',
+    mono: '"IBM Plex Mono", "Cascadia Code", "Consolas", monospace',
+    display: '"Iowan Old Style", "Baskerville", "Georgia", serif',
+  },
 }
 
 const DENSITIES: Record<DensityKey, Density> = {
@@ -200,8 +208,8 @@ export function getPreset(key: PresetKey): Preset {
   return PRESETS[key]
 }
 
-export function getTheme(key: ThemeKey, fontPackKey: FontPackKey, densityKey: DensityKey): Theme {
-  return createTheme(PALETTES[key], FONT_PACKS[fontPackKey], DENSITIES[densityKey])
+export function getTheme(key: ThemeKey, fontPackKey: FontPackKey, densityKey: DensityKey, languageMode: LanguageModeKey): Theme {
+  return createTheme(PALETTES[key], FONT_PACKS[fontPackKey], DENSITIES[densityKey], languageMode)
 }
 
 export function getFontPackLabel(key: FontPackKey): string {
@@ -212,26 +220,31 @@ export function getDensityLabel(key: DensityKey): string {
   return DENSITIES[key].name
 }
 
-function createTheme(palette: Palette & { name: string }, fontPack: FontPack, density: Density): Theme {
-  const bodyFont = `400 ${density.bodySize}px ${fontPack.body}`
+function createTheme(
+  palette: Palette & { name: string },
+  fontPack: FontPack,
+  density: Density,
+  languageMode: LanguageModeKey,
+): Theme {
+  const adjustedFontPack = resolveFontPackForLanguage(fontPack, languageMode)
 
   return {
     ...palette,
-    name: `${palette.name} / ${fontPack.name} / ${density.name}`,
+    name: `${palette.name} / ${adjustedFontPack.name} / ${density.name} / ${languageMode}`,
     styles: {
-      body: style(bodyFont, palette.ink, density.bodyLeading),
-      lead: style(`500 ${density.leadSize}px ${fontPack.display}`, palette.ink, density.leadLeading),
-      strong: style(`700 ${density.bodySize}px ${fontPack.body}`, palette.ink, density.bodyLeading),
-      em: style(`400 italic ${density.bodySize}px ${fontPack.body}`, palette.ink, density.bodyLeading),
-      code: { ...style(`600 24px ${fontPack.mono}`, palette.ink, 42), inlinePaddingX: 14, inlineBackground: palette.accentFaint },
-      link: { ...style(`600 ${density.bodySize}px ${fontPack.sans}`, palette.accent, density.bodyLeading), underline: true },
-      h1: style(`700 ${density.h1Size}px ${fontPack.display}`, palette.ink, density.h1Leading),
-      h2: style(`700 ${density.h2Size}px ${fontPack.sans}`, palette.ink, density.h2Leading),
-      h3: style(`700 ${density.h3Size}px ${fontPack.sans}`, palette.ink, density.h3Leading),
-      quote: style(`500 ${density.quoteSize}px ${fontPack.display}`, palette.ink, density.quoteLeading),
-      caption: style(`500 ${density.captionSize}px ${fontPack.sans}`, palette.muted, density.captionLeading),
-      'list-prefix': style(`700 ${density.bodySize}px ${fontPack.sans}`, palette.accent, density.bodyLeading),
-      eyebrow: style(`700 ${density.eyebrowSize}px ${fontPack.sans}`, palette.accent, density.eyebrowLeading),
+      body: style(`400 ${density.bodySize}px ${adjustedFontPack.body}`, palette.ink, density.bodyLeading),
+      lead: style(`500 ${density.leadSize}px ${adjustedFontPack.display}`, palette.ink, density.leadLeading),
+      strong: style(`700 ${density.bodySize}px ${adjustedFontPack.body}`, palette.ink, density.bodyLeading),
+      em: style(`400 italic ${density.bodySize}px ${adjustedFontPack.body}`, palette.ink, density.bodyLeading),
+      code: { ...style(`600 24px ${adjustedFontPack.mono}`, palette.ink, 42), inlinePaddingX: 14, inlineBackground: palette.accentFaint },
+      link: { ...style(`600 ${density.bodySize}px ${adjustedFontPack.sans}`, palette.accent, density.bodyLeading), underline: true },
+      h1: style(`700 ${density.h1Size}px ${adjustedFontPack.display}`, palette.ink, density.h1Leading),
+      h2: style(`700 ${density.h2Size}px ${adjustedFontPack.sans}`, palette.ink, density.h2Leading),
+      h3: style(`700 ${density.h3Size}px ${adjustedFontPack.sans}`, palette.ink, density.h3Leading),
+      quote: style(`500 ${density.quoteSize}px ${adjustedFontPack.display}`, palette.ink, density.quoteLeading),
+      caption: style(`500 ${density.captionSize}px ${adjustedFontPack.sans}`, palette.muted, density.captionLeading),
+      'list-prefix': style(`700 ${density.bodySize}px ${adjustedFontPack.sans}`, palette.accent, density.bodyLeading),
+      eyebrow: style(`700 ${density.eyebrowSize}px ${adjustedFontPack.sans}`, palette.accent, density.eyebrowLeading),
     },
     rhythm: {
       leadIndent: 0,
@@ -240,6 +253,16 @@ function createTheme(palette: Palette & { name: string }, fontPack: FontPack, de
       compactGap: density.compactGap,
     },
   }
+}
+
+function resolveFontPackForLanguage(fontPack: FontPack, languageMode: LanguageModeKey): FontPack {
+  if (languageMode === 'en' && fontPack.name !== 'English Serif' && fontPack.name !== 'Sans Editorial') {
+    return FONT_PACKS['serif-en']
+  }
+  if (languageMode === 'zh' && fontPack.name === 'English Serif') {
+    return FONT_PACKS['serif-cn']
+  }
+  return fontPack
 }
 
 function style(font: string, color: string, lineHeight: number): TextStyle {

@@ -5,6 +5,7 @@ import type {
   FontPackKey,
   InlineSpan,
   InlineStyleName,
+  LanguageModeKey,
   MarkdownBlock,
   PageLayout,
   Preset,
@@ -18,6 +19,7 @@ import type {
 } from '../domain/types'
 import { parseMarkdown } from '../markdown/parser'
 import { getPreset, getTheme } from '../themes/catalog'
+import { configureLanguageMode } from '../adapters/pretext'
 
 type BlockContext = {
   previous: MarkdownBlock | null
@@ -30,9 +32,11 @@ export function buildRenderDocument(
   coverTemplate: CoverTemplateKey,
   fontPackKey: FontPackKey,
   densityKey: DensityKey,
+  languageMode: LanguageModeKey,
 ): RenderDocument {
   const preset = getPreset(presetKey)
-  const theme = getTheme(themeKey, fontPackKey, densityKey)
+  configureLanguageMode(languageMode)
+  const theme = getTheme(themeKey, fontPackKey, densityKey, languageMode)
   const blocks = parseMarkdown(source)
   const contentPages = preset.pageHeight === null
     ? buildLongImagePages(blocks, preset, theme)
