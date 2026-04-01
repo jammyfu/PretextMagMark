@@ -136,7 +136,7 @@ function createInlineItems(spans: InlineSpan[], baseStyleName: InlineStyleName, 
     const styleName = resolveStyleName(baseStyleName, span.style)
     const style = theme.styles[styleName]
     const gapWidth = measureCollapsedSpaceWidth(style.font)
-    const tokens = tokenizeSpanText(span.text)
+    const tokens = tokenizeSpanText(span.text, styleName)
     let carryGap = pendingGap
     for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
       const token = tokens[tokenIndex]!
@@ -196,7 +196,10 @@ function cursorsMatch(a: LayoutCursor, b: LayoutCursor): boolean {
   return a.segmentIndex === b.segmentIndex && a.graphemeIndex === b.graphemeIndex
 }
 
-function tokenizeSpanText(text: string): Array<{ kind: 'space' } | { kind: 'text', text: string, stretchableBefore: boolean, keepWholeIfPossible: boolean }> {
+function tokenizeSpanText(
+  text: string,
+  styleName: InlineStyleName,
+): Array<{ kind: 'space' } | { kind: 'text', text: string, stretchableBefore: boolean, keepWholeIfPossible: boolean }> {
   const trimmed = text.trim()
   if (trimmed.length === 0) return []
 
@@ -210,7 +213,7 @@ function tokenizeSpanText(text: string): Array<{ kind: 'space' } | { kind: 'text
       continue
     }
 
-    if (shouldSegmentForIdeographicJustification(part)) {
+    if (shouldSegmentForIdeographicJustification(part, styleName)) {
       const graphemes = [...graphemeSegmenter.segment(part)].map(item => item.segment)
       for (let graphemeIndex = 0; graphemeIndex < graphemes.length; graphemeIndex++) {
         const grapheme = graphemes[graphemeIndex]!
@@ -235,7 +238,10 @@ function tokenizeSpanText(text: string): Array<{ kind: 'space' } | { kind: 'text
   return tokens
 }
 
-function shouldSegmentForIdeographicJustification(text: string): boolean {
+function shouldSegmentForIdeographicJustification(text: string, styleName: InlineStyleName): boolean {
+  if (styleName === 'h1' || styleName === 'h2' || styleName === 'h3' || styleName === 'eyebrow' || styleName === 'lead') {
+    return false
+  }
   if (currentLanguageMode === 'en') return false
   return !/\s/.test(text) && /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(text)
 }
