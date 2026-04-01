@@ -1,0 +1,318 @@
+:root {
+  color-scheme: light;
+  --bg: #efe4d3;
+  --panel: rgba(255, 249, 240, 0.9);
+  --panel-strong: rgba(252, 244, 232, 0.98);
+  --ink: #241714;
+  --muted: #7c6558;
+  --accent: #ca4d37;
+  --accent-soft: #f6d3c4;
+  --rule: rgba(65, 37, 27, 0.14);
+  --shadow: 0 24px 90px rgba(67, 36, 19, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(218, 102, 77, 0.2), transparent 28%),
+    radial-gradient(circle at 80% 0%, rgba(112, 71, 44, 0.12), transparent 22%),
+    linear-gradient(180deg, #f8efe3 0%, var(--bg) 46%, #eadcc8 100%);
+  color: var(--ink);
+  font-family: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.18;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.45) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.45) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.7), transparent 85%);
+}
+
+#app {
+  width: min(1500px, calc(100vw - 28px));
+  margin: 14px auto;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(340px, 440px) minmax(0, 1fr);
+  gap: 22px;
+  min-height: calc(100vh - 28px);
+}
+
+.panel,
+.preview {
+  border: 1px solid var(--rule);
+  border-radius: 28px;
+  background: var(--panel);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-head {
+  padding: 24px 24px 14px;
+  border-bottom: 1px solid var(--rule);
+  background:
+    linear-gradient(135deg, rgba(202, 77, 55, 0.18), transparent 58%),
+    linear-gradient(180deg, rgba(255,255,255,0.38), transparent);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font: 700 11px/1.2 "Consolas", "SFMono-Regular", ui-monospace, monospace;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font: 700 clamp(30px, 4vw, 42px)/0.96 Georgia, "Times New Roman", "Songti SC", serif;
+  letter-spacing: -0.03em;
+}
+
+.intro {
+  margin: 12px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+  max-width: 38ch;
+}
+
+.controls {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.section {
+  display: grid;
+  gap: 10px;
+}
+
+.section-title {
+  margin: 0;
+  font: 700 12px/1.2 "Consolas", "SFMono-Regular", ui-monospace, monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.inline-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+select,
+textarea,
+input[type="text"] {
+  width: 100%;
+  border: 1px solid rgba(53, 34, 25, 0.12);
+  border-radius: 16px;
+  background: var(--panel-strong);
+  color: var(--ink);
+  font: inherit;
+  outline: none;
+  transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+select,
+input[type="text"] {
+  min-height: 46px;
+  padding: 0 14px;
+}
+
+textarea {
+  min-height: 380px;
+  resize: vertical;
+  padding: 16px 18px;
+  line-height: 1.6;
+  font-family: "Cascadia Code", "Consolas", "SFMono-Regular", ui-monospace, monospace;
+  font-size: 13px;
+}
+
+select:focus,
+textarea:focus,
+input[type="text"]:focus {
+  border-color: color-mix(in srgb, var(--accent) 40%, white 60%);
+  box-shadow: 0 0 0 4px rgba(202, 77, 55, 0.11);
+  transform: translateY(-1px);
+}
+
+.button-row,
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+button,
+.file-button {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #d6614c 0%, #b63e2b 100%);
+  color: white;
+  font: 700 13px/1 "Segoe UI", "PingFang SC", sans-serif;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(182, 62, 43, 0.25);
+  transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+  text-decoration: none;
+}
+
+button.secondary,
+.file-button.secondary {
+  background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(247, 236, 223, 0.95));
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(53, 34, 25, 0.12);
+}
+
+button:hover,
+.file-button:hover {
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.55;
+  transform: none;
+  box-shadow: none;
+}
+
+.file-button {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.file-button input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.meta {
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(255, 252, 247, 0.72);
+  border: 1px solid rgba(53, 34, 25, 0.08);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.preview {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+}
+
+.preview-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.preview-title {
+  display: grid;
+  gap: 4px;
+}
+
+.preview-title strong {
+  font: 700 18px/1.1 Georgia, "Times New Roman", "Songti SC", serif;
+  letter-spacing: -0.02em;
+}
+
+.preview-title span,
+.preview-meta {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.preview-body {
+  overflow: auto;
+  padding: 24px;
+}
+
+.canvas-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  min-height: 100%;
+}
+
+canvas {
+  width: min(100%, 420px);
+  height: auto;
+  border-radius: 26px;
+  border: 1px solid rgba(53, 34, 25, 0.1);
+  background: white;
+  box-shadow: 0 28px 80px rgba(72, 44, 31, 0.18);
+}
+
+.page-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 251, 245, 0.9);
+  border: 1px solid rgba(53, 34, 25, 0.08);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 1080px) {
+  #app {
+    width: min(100vw - 18px, 960px);
+    margin: 9px auto;
+  }
+
+  .shell {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .preview-body {
+    min-height: 46vh;
+  }
+
+  canvas {
+    width: min(100%, 360px);
+  }
+}
