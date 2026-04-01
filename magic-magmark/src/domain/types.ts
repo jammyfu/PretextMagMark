@@ -120,6 +120,7 @@ export type TextRow = {
   }
   fragments: TextFragment[]
   tone?: 'quote' | 'code' | 'pull-quote'
+  ornament?: 'lead-rule'
 }
 
 export type DividerRow = {

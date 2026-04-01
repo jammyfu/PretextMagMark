@@ -487,6 +487,7 @@ function createTextRows(
   firstLineIndent = 0,
 ): TextRow[] {
   const rows: TextRow[] = []
+  const decorateLeadOpening = baseStyleName === 'lead'
   for (let index = 0; index < lines.length; index++) {
     const fragments = lines[index]!.fragments
     const lineHeight = fragments.length === 0
@@ -502,6 +503,7 @@ function createTextRows(
       prefix: index === 0 ? prefix : undefined,
       fragments,
       tone,
+      ornament: decorateLeadOpening && index === 0 ? 'lead-rule' : undefined,
     })
   }
   return rows
@@ -575,6 +577,7 @@ function cloneRow(row: RenderRow): RenderRow {
         prefix: row.prefix === undefined ? undefined : { ...row.prefix },
         fragments: row.fragments.map(fragment => ({ ...fragment })),
         tone: row.tone,
+        ornament: row.ornament,
       }
   }
 }
@@ -591,6 +594,7 @@ function cloneTextRow(row: TextRow): TextRow {
     prefix: row.prefix === undefined ? undefined : { ...row.prefix },
     fragments: row.fragments.map(fragment => ({ ...fragment })),
     tone: row.tone,
+    ornament: row.ornament,
   }
 }
 

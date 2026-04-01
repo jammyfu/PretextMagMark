@@ -237,7 +237,6 @@ function drawFeatureSplitCover(
 
 function drawTextRow(ctx: CanvasRenderingContext2D, row: TextRow, doc: RenderDocument): void {
   const { theme, preset } = doc
-  const firstStyleName = row.fragments[0]?.styleName
 
   if (row.tone === 'code') {
     ctx.fillStyle = '#f2ede7'
@@ -293,7 +292,7 @@ function drawTextRow(ctx: CanvasRenderingContext2D, row: TextRow, doc: RenderDoc
     cursorX += fragment.width
   }
 
-  if (firstStyleName === 'lead') {
+  if (row.ornament === 'lead-rule') {
     ctx.strokeStyle = theme.accent
     ctx.lineWidth = 2
     ctx.beginPath()
