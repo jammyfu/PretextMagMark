@@ -19,6 +19,7 @@ export type InlineStyleName =
   | 'quote'
   | 'caption'
   | 'list-prefix'
+  | 'eyebrow'
 
 export type InlineSpan = {
   text: string
@@ -29,10 +30,12 @@ export type MarkdownBlock =
   | { kind: 'heading'; depth: 1 | 2 | 3; spans: InlineSpan[] }
   | { kind: 'paragraph'; spans: InlineSpan[] }
   | { kind: 'blockquote'; spans: InlineSpan[] }
+  | { kind: 'pull-quote'; spans: InlineSpan[] }
   | { kind: 'list'; ordered: boolean; items: InlineSpan[][] }
   | { kind: 'code'; code: string }
   | { kind: 'divider' }
-  | { kind: 'image'; alt: string; url: string }
+  | { kind: 'page-break' }
+  | { kind: 'image'; alt: string; url: string; caption?: string }
 
 export type TextStyle = {
   font: string
@@ -93,11 +96,17 @@ export type TextRow = {
     width: number
   }
   fragments: TextFragment[]
-  tone?: 'quote' | 'code'
+  tone?: 'quote' | 'code' | 'pull-quote'
 }
 
 export type DividerRow = {
   kind: 'divider'
+  y: number
+  height: number
+}
+
+export type PageBreakRow = {
+  kind: 'page-break'
   y: number
   height: number
 }
@@ -108,9 +117,10 @@ export type ImageRow = {
   height: number
   alt: string
   url: string
+  caption?: string
 }
 
-export type RenderRow = TextRow | DividerRow | ImageRow
+export type RenderRow = TextRow | DividerRow | PageBreakRow | ImageRow
 
 export type PageLayout = {
   rows: RenderRow[]

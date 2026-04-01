@@ -13,6 +13,12 @@ export function parseMarkdown(source: string): MarkdownBlock[] {
       continue
     }
 
+    if (trimmed === '<!-- page-break -->') {
+      blocks.push({ kind: 'page-break' })
+      index++
+      continue
+    }
+
     if (trimmed.startsWith('```')) {
       index++
       const codeLines: string[] = []
@@ -44,8 +50,25 @@ export function parseMarkdown(source: string): MarkdownBlock[] {
 
     const imageMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/)
     if (imageMatch !== null) {
-      blocks.push({ kind: 'image', alt: imageMatch[1]!, url: imageMatch[2]!.trim() })
-      index++
+      const captionLine = lines[index + 1]?.trim() ?? ''
+      const caption = parseCaption(captionLine)
+      blocks.push({
+        kind: 'image',
+        alt: imageMatch[1]!,
+        url: imageMatch[2]!.trim(),
+        caption: caption ?? undefined,
+      })
+      index += caption === null ? 1 : 2
+      continue
+    }
+
+    if (/^>!\s?/.test(trimmed)) {
+      const quoteLines: string[] = []
+      while (index < lines.length && /^>!\s?/.test(lines[index]!.trim())) {
+        quoteLines.push(lines[index]!.trim().replace(/^>!\s?/, ''))
+        index++
+      }
+      blocks.push({ kind: 'pull-quote', spans: parseInline(quoteLines.join(' ')) })
       continue
     }
 
@@ -78,9 +101,10 @@ export function parseMarkdown(source: string): MarkdownBlock[] {
       const currentTrimmed = current.trim()
       if (
         currentTrimmed.length === 0 ||
+        currentTrimmed === '<!-- page-break -->' ||
         /^```/.test(currentTrimmed) ||
         /^(#{1,3})\s+/.test(currentTrimmed) ||
-        /^>\s?/.test(currentTrimmed) ||
+        /^>!?\s?/.test(currentTrimmed) ||
         /^([-*_])(?:\s*\1){2,}\s*$/.test(currentTrimmed) ||
         /^\s*((?:[-*+])|\d+\.)\s+/.test(current) ||
         /^!\[/.test(currentTrimmed)
@@ -95,6 +119,11 @@ export function parseMarkdown(source: string): MarkdownBlock[] {
   }
 
   return blocks
+}
+
+function parseCaption(line: string): string | null {
+  const match = line.match(/^\*([^*]+)\*$/)
+  return match?.[1]?.trim() ?? null
 }
 
 function parseInline(text: string): InlineSpan[] {

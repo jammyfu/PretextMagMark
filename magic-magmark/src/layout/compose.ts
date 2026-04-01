@@ -26,7 +26,7 @@ export function buildRenderDocument(source: string, presetKey: PresetKey, themeK
   const rows = layoutBlocks(blocks, preset, theme)
   const pages = preset.pageHeight === null
     ? [{
-        rows: rows.map(cloneRow),
+        rows: rows.filter(row => row.kind !== 'page-break').map(cloneRow),
         height: Math.max(rows.length === 0 ? 960 : computeDocumentHeight(rows) + preset.bottomInset, 960),
       }]
     : paginateRows(rows, preset)
@@ -50,7 +50,7 @@ function layoutBlocks(blocks: MarkdownBlock[], preset: Preset, theme: Theme): Re
     const result = layoutBlock(block, preset.marginX, preset.contentWidth, y, theme, { previous })
     rows.push(...result.rows)
     y = result.nextY
-    previous = block
+    previous = block.kind === 'page-break' ? previous : block
   }
   return rows
 }
@@ -74,7 +74,7 @@ function layoutBlock(
     }
 
     case 'paragraph': {
-      const isLead = context.previous === null || context.previous.kind === 'heading' || context.previous.kind === 'divider'
+      const isLead = context.previous === null || context.previous.kind === 'heading' || context.previous.kind === 'divider' || context.previous.kind === 'page-break'
       const styleName: InlineStyleName = isLead ? 'lead' : 'body'
       const lines = layoutStyledSpans(block.spans, styleName, maxWidth, theme)
       const firstLineIndent = isLead ? theme.rhythm.leadIndent : theme.rhythm.paragraphIndent
@@ -91,12 +91,20 @@ function layoutBlock(
       return { rows, nextY: endY + theme.rhythm.sectionGap }
     }
 
+    case 'pull-quote': {
+      const inset = 92
+      const lines = layoutStyledSpans(block.spans, 'quote', maxWidth - inset * 2 + 28, theme)
+      const rows = createTextRows(lines, x + inset, startY + 28, theme, 'quote', undefined, 'pull-quote')
+      const endY = rows.length === 0 ? startY + 28 : rows[rows.length - 1]!.y + rows[rows.length - 1]!.height
+      return { rows, nextY: endY + theme.rhythm.sectionGap }
+    }
+
     case 'list': {
       const rows: RenderRow[] = []
       let y = startY + 8
       for (let itemIndex = 0; itemIndex < block.items.length; itemIndex++) {
         const item = block.items[itemIndex]!
-        const prefixText = block.ordered ? `${itemIndex + 1}.` : '—'
+        const prefixText = block.ordered ? `${itemIndex + 1}.` : '-'
         const prefixWidth = measureSingleLine(prefixText, theme.styles['list-prefix'].font)
         const indent = prefixWidth + 24
         const lines = layoutStyledSpans(item, 'body', maxWidth - indent, theme)
@@ -135,10 +143,13 @@ function layoutBlock(
     case 'divider':
       return { rows: [{ kind: 'divider', y: startY + 16, height: 28 }], nextY: startY + 54 }
 
+    case 'page-break':
+      return { rows: [{ kind: 'page-break', y: startY, height: 0 }], nextY: startY }
+
     case 'image':
       return {
-        rows: [{ kind: 'image', y: startY + 18, height: 280, alt: block.alt, url: block.url }],
-        nextY: startY + 318,
+        rows: [{ kind: 'image', y: startY + 18, height: 280, alt: block.alt, url: block.url, caption: block.caption }],
+        nextY: startY + 336,
       }
   }
 }
@@ -150,7 +161,7 @@ function createTextRows(
   theme: Theme,
   baseStyleName: InlineStyleName,
   prefix?: { text: string, width: number, styleName: InlineStyleName },
-  tone?: 'quote' | 'code',
+  tone?: 'quote' | 'code' | 'pull-quote',
   firstLineIndent = 0,
 ): TextRow[] {
   const rows: TextRow[] = []
@@ -184,6 +195,18 @@ function paginateRows(rows: RenderRow[], preset: Preset): PageLayout[] {
 
   for (let index = 0; index < rows.length; index++) {
     const row = rows[index]!
+
+    if (row.kind === 'page-break') {
+      if (currentRows.length > 0) {
+        pages.push({ rows: shiftRows(currentRows, pageStartY - preset.topInset), height: pageHeight })
+      } else {
+        pages.push({ rows: [], height: pageHeight })
+      }
+      currentRows = []
+      pageStartY = row.y
+      continue
+    }
+
     const prospectiveBottom = row.y - pageStartY + row.height + preset.topInset
     if (prospectiveBottom > pageHeight - preset.bottomInset && currentRows.length > 0) {
       pages.push({ rows: shiftRows(currentRows, pageStartY - preset.topInset), height: pageHeight })
@@ -204,7 +227,9 @@ function paginateRows(rows: RenderRow[], preset: Preset): PageLayout[] {
 function shiftRows(rows: RenderRow[], delta: number): RenderRow[] {
   return rows.map(row => {
     const cloned = cloneRow(row)
-    cloned.y -= delta
+    if (cloned.kind !== 'page-break') {
+      cloned.y -= delta
+    }
     return cloned
   })
 }
@@ -213,6 +238,7 @@ function computeDocumentHeight(rows: RenderRow[]): number {
   let max = 0
   for (let index = 0; index < rows.length; index++) {
     const row = rows[index]!
+    if (row.kind === 'page-break') continue
     max = Math.max(max, row.y + row.height)
   }
   return max
@@ -222,8 +248,10 @@ function cloneRow(row: RenderRow): RenderRow {
   switch (row.kind) {
     case 'divider':
       return { kind: 'divider', y: row.y, height: row.height }
+    case 'page-break':
+      return { kind: 'page-break', y: row.y, height: row.height }
     case 'image':
-      return { kind: 'image', y: row.y, height: row.height, alt: row.alt, url: row.url }
+      return { kind: 'image', y: row.y, height: row.height, alt: row.alt, url: row.url, caption: row.caption }
     case 'text':
       return {
         kind: 'text',

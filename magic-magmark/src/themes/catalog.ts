@@ -84,6 +84,7 @@ function createTheme(input: Omit<Theme, 'styles' | 'rhythm'>): Theme {
       quote: style(`500 33px ${displayFamily}`, input.ink, 56),
       caption: style(`500 21px ${sansFamily}`, input.muted, 32),
       'list-prefix': style(`700 31px ${sansFamily}`, input.accent, 54),
+      eyebrow: style(`700 18px ${sansFamily}`, input.accent, 28),
     },
     rhythm: {
       leadIndent: 0,

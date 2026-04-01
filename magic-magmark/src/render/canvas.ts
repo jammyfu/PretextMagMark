@@ -69,7 +69,7 @@ function drawPage(
 
   ctx.fillStyle = theme.muted
   ctx.font = `500 18px "PingFang SC", "Segoe UI", sans-serif`
-  ctx.fillText('Magazine rhythm | Pretext layout | Canvas export', preset.marginX, height - 54)
+  ctx.fillText('Magazine blocks | Pretext layout | Canvas export', preset.marginX, height - 54)
 }
 
 function drawTextRow(ctx: CanvasRenderingContext2D, row: TextRow, doc: RenderDocument): void {
@@ -87,6 +87,20 @@ function drawTextRow(ctx: CanvasRenderingContext2D, row: TextRow, doc: RenderDoc
       ctx.fillStyle = theme.accent
       ctx.font = `700 54px "Iowan Old Style", Georgia, serif`
       ctx.fillText('"', preset.marginX + 10, row.y + row.height * 0.72)
+    }
+  }
+
+  if (row.tone === 'pull-quote') {
+    ctx.fillStyle = theme.accentFaint
+    roundRect(ctx, preset.marginX + 34, row.y - 22, preset.contentWidth - 68, row.height + 34, 28)
+    ctx.fill()
+    ctx.fillStyle = theme.accentSoft
+    roundRect(ctx, preset.marginX + 54, row.y - 12, 120, 6, 4)
+    ctx.fill()
+    if (row.prefix === undefined) {
+      ctx.fillStyle = theme.accent
+      ctx.font = `700 64px "Iowan Old Style", Georgia, serif`
+      ctx.fillText('"', row.x - 40, row.y + row.height * 0.8)
     }
   }
 
@@ -151,12 +165,20 @@ function drawTextRow(ctx: CanvasRenderingContext2D, row: TextRow, doc: RenderDoc
 }
 
 function drawDividerRow(ctx: CanvasRenderingContext2D, row: { y: number }, doc: RenderDocument): void {
+  const centerX = doc.preset.marginX + doc.preset.contentWidth / 2
   ctx.strokeStyle = doc.theme.rule
   ctx.lineWidth = 2
   ctx.beginPath()
   ctx.moveTo(doc.preset.marginX, row.y + 16)
+  ctx.lineTo(centerX - 42, row.y + 16)
+  ctx.moveTo(centerX + 42, row.y + 16)
   ctx.lineTo(doc.preset.marginX + doc.preset.contentWidth, row.y + 16)
   ctx.stroke()
+
+  ctx.fillStyle = doc.theme.accent
+  ctx.beginPath()
+  ctx.arc(centerX, row.y + 16, 4, 0, Math.PI * 2)
+  ctx.fill()
 }
 
 function drawImageRow(ctx: CanvasRenderingContext2D, row: ImageRow, doc: RenderDocument): void {
@@ -176,7 +198,8 @@ function drawImageRow(ctx: CanvasRenderingContext2D, row: ImageRow, doc: RenderD
   ctx.fillText(row.alt.length > 0 ? row.alt : 'No image caption provided', preset.marginX + 32, row.y + 114)
   ctx.fillStyle = theme.muted
   ctx.font = doc.theme.styles.caption.font
-  wrapCanvasText(ctx, row.url, preset.marginX + 32, row.y + 160, preset.contentWidth - 64, doc.theme.styles.caption.lineHeight)
+  const captionText = row.caption ?? row.url
+  wrapCanvasText(ctx, captionText, preset.marginX + 32, row.y + 160, preset.contentWidth - 64, doc.theme.styles.caption.lineHeight)
 }
 
 function wrapCanvasText(
