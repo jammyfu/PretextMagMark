@@ -5,6 +5,7 @@ import type { CoverTemplateKey, DensityKey, FontPackKey, LanguageModeKey, Orname
 import { canvasToBlob, downloadBlob, escapeHtml, sanitizeStem } from './export/png'
 import { buildRenderDocument } from './layout/compose'
 import { drawPageToCanvas } from './render/canvas'
+import { getFontPackLabel, resolveFontPackKeyForLanguage } from './themes/catalog'
 import { renderAppShell } from './ui/template'
 
 type DomCache = {
@@ -157,6 +158,11 @@ function wireEvents(): void {
 
   dom.languageModeSelect.addEventListener('change', () => {
     st.languageMode = dom.languageModeSelect.value as LanguageModeKey
+    const recommendedFontPack = resolveFontPackKeyForLanguage(st.fontPackKey, st.languageMode)
+    if (recommendedFontPack !== st.fontPackKey) {
+      st.fontPackKey = recommendedFontPack
+      dom.fontPackSelect.value = recommendedFontPack
+    }
     void renderFromState()
   })
 
@@ -273,7 +279,7 @@ function syncUi(): void {
     `Canvas size: ${doc.preset.pageWidth} x ${Math.round(page.height)}`,
     `Grid: ${doc.preset.columnCount} column${doc.preset.columnCount > 1 ? 's' : ''}${doc.preset.columnCount > 1 ? `, ${doc.preset.columnGap}px gap` : ''}`,
     st.presetKey === 'xiaohongshu' ? 'Mode: auto-paginated social cards' : 'Mode: single long image',
-    `Font pack: ${st.fontPackKey}`,
+    `Font pack: ${getFontPackLabel(st.fontPackKey)}`,
     `Language: ${st.languageMode}`,
     `Density: ${st.densityKey}`,
     `Cover template: ${st.coverTemplate}`,
