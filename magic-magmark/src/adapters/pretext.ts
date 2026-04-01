@@ -247,10 +247,19 @@ function shouldSegmentForIdeographicJustification(text: string, styleName: Inlin
 }
 
 function shouldKeepWholeToken(text: string): boolean {
+  if (text.length <= 1) return false
   if (!/[A-Za-z]/.test(text)) return false
   if (/[/:@?=#&_~]/.test(text)) return false
-  if (text.length <= 1) return false
-  return /^[A-Za-z]+(?:['’-][A-Za-z]+)*[.,;:!?)]*$/.test(text)
+
+  const trimmed = text
+    .replace(/^[("'[\]]+/g, '')
+    .replace(/[.,;:!?)]*$/g, '')
+  if (trimmed.length <= 1) return false
+
+  if (/^[A-Za-z]+(?:['’-][A-Za-z]+)*$/.test(trimmed)) return true
+  if (/^[A-Za-z0-9]+(?:[._+-][A-Za-z0-9]+)+$/.test(trimmed)) return true
+  if (/^[A-Za-z]+[0-9]+(?:\.[0-9]+)*$/.test(trimmed)) return true
+  return false
 }
 
 function resolveLocale(languageMode: LanguageModeKey): string | undefined {

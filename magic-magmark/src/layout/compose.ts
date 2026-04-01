@@ -378,7 +378,19 @@ function shouldAdvanceBeforePlacement(
   const nextWidth = nextPlacement === 'full-width' ? preset.contentWidth : width
   const next = layoutBlock(nextBlock, nextX, nextWidth, current.nextY, theme, { previous: block })
 
-  return !fitsOnPage(next.nextY, preset)
+  if (!fitsOnPage(next.nextY, preset)) return true
+
+  if (block.kind === 'divider' && nextBlock.kind === 'heading') {
+    const followingBlock = findNextContentBlock(blocks, index + 2)
+    if (followingBlock === null) return false
+    const followingPlacement = getBlockPlacement(followingBlock, nextBlock)
+    const followingX = followingPlacement === 'full-width' ? preset.marginX : nextX
+    const followingWidth = followingPlacement === 'full-width' ? preset.contentWidth : nextWidth
+    const following = layoutBlock(followingBlock, followingX, followingWidth, next.nextY, theme, { previous: nextBlock })
+    return !fitsOnPage(following.nextY, preset)
+  }
+
+  return false
 }
 
 function isKeepWithNextBlock(block: MarkdownBlock): boolean {
