@@ -252,8 +252,8 @@ function shouldKeepWholeToken(text: string): boolean {
   if (/[/:@?=#&_~]/.test(text)) return false
 
   const trimmed = text
-    .replace(/^[("'[\]]+/g, '')
-    .replace(/[.,;:!?)]*$/g, '')
+    .replace(/^[("'[\]（【《「『]+/g, '')
+    .replace(/[.,;:!?)]*[，。；：！？、】【》」』]*$/g, '')
   if (trimmed.length <= 1) return false
 
   if (/^[A-Za-z]+(?:['’-][A-Za-z]+)*$/.test(trimmed)) return true

@@ -1,5 +1,6 @@
+import { layoutStyledSpans } from '../adapters/pretext'
 import type { ImageAssetMap } from '../assets/images'
-import type { ImageRow, OrnamentKey, PageLayout, RenderDocument, TextRow } from '../domain/types'
+import type { ImageRow, OrnamentKey, PageLayout, PreparedLine, RenderDocument, TextRow, Theme } from '../domain/types'
 
 export function drawPageToCanvas(
   canvas: HTMLCanvasElement,
@@ -146,21 +147,13 @@ function drawCoverPage(
   const kicker = cover.kicker ?? (ornament === 'editorial' ? 'EDITORIAL ISSUE' : 'MAGIC MAGMARK')
   ctx.fillText(kicker.toUpperCase(), preset.marginX, 164)
 
-  const titleLines = wrapTextLines(ctx, cover.title, theme.styles.h1.font, preset.contentWidth - 80)
-  ctx.font = theme.styles.h1.font
-  ctx.fillStyle = coverAsset === undefined ? theme.ink : '#fff8f0'
-  for (let index = 0; index < titleLines.length; index++) {
-    ctx.fillText(titleLines[index]!, preset.marginX, 310 + index * theme.styles.h1.lineHeight)
-  }
+  const titleLines = layoutStyledSpans([{ text: cover.title, style: 'body' }], 'h1', preset.contentWidth - 80, theme)
+  drawPreparedParagraph(ctx, titleLines, preset.marginX, 310, theme, coverAsset === undefined ? theme.ink : '#fff8f0')
 
   if (cover.dek !== undefined) {
-    const dekY = 310 + titleLines.length * theme.styles.h1.lineHeight + 46
-    const dekLines = wrapTextLines(ctx, cover.dek, theme.styles.lead.font, preset.contentWidth - 140)
-    ctx.font = theme.styles.lead.font
-    ctx.fillStyle = coverAsset === undefined ? theme.muted : '#f3dfd0'
-    for (let index = 0; index < dekLines.length; index++) {
-      ctx.fillText(dekLines[index]!, preset.marginX, dekY + index * theme.styles.lead.lineHeight)
-    }
+    const dekY = 310 + getPreparedBlockHeight(titleLines, theme, 'h1') + 46
+    const dekLines = layoutStyledSpans([{ text: cover.dek, style: 'body' }], 'lead', preset.contentWidth - 140, theme)
+    drawPreparedParagraph(ctx, dekLines, preset.marginX, dekY, theme, coverAsset === undefined ? theme.muted : '#f3dfd0')
   }
 
   ctx.fillStyle = coverAsset === undefined ? theme.muted : '#f3dfd0'
@@ -206,21 +199,13 @@ function drawFeatureSplitCover(
   ctx.font = `700 18px "PingFang SC", "Segoe UI", sans-serif`
   ctx.fillText((cover.kicker ?? 'FEATURE STORY').toUpperCase(), 72, 152)
 
-  const titleLines = wrapTextLines(ctx, cover.title, theme.styles.h1.font, panelWidth - 144)
-  ctx.font = theme.styles.h1.font
-  ctx.fillStyle = theme.ink
-  for (let index = 0; index < titleLines.length; index++) {
-    ctx.fillText(titleLines[index]!, 72, 296 + index * theme.styles.h1.lineHeight)
-  }
+  const titleLines = layoutStyledSpans([{ text: cover.title, style: 'body' }], 'h1', panelWidth - 144, theme)
+  drawPreparedParagraph(ctx, titleLines, 72, 296, theme, theme.ink)
 
   if (cover.dek !== undefined) {
-    const dekLines = wrapTextLines(ctx, cover.dek, theme.styles.lead.font, panelWidth - 164)
-    ctx.font = theme.styles.lead.font
-    ctx.fillStyle = theme.muted
-    const baseY = 296 + titleLines.length * theme.styles.h1.lineHeight + 42
-    for (let index = 0; index < dekLines.length; index++) {
-      ctx.fillText(dekLines[index]!, 72, baseY + index * theme.styles.lead.lineHeight)
-    }
+    const dekLines = layoutStyledSpans([{ text: cover.dek, style: 'body' }], 'lead', panelWidth - 164, theme)
+    const baseY = 296 + getPreparedBlockHeight(titleLines, theme, 'h1') + 42
+    drawPreparedParagraph(ctx, dekLines, 72, baseY, theme, theme.muted)
   }
 
   ctx.strokeStyle = theme.rule
@@ -514,6 +499,43 @@ function wrapTextLines(ctx: CanvasRenderingContext2D, text: string, font: string
   }
   if (line.length > 0) lines.push(line)
   return lines
+}
+
+function drawPreparedParagraph(
+  ctx: CanvasRenderingContext2D,
+  lines: PreparedLine[],
+  x: number,
+  startY: number,
+  theme: Theme,
+  fallbackColor: string,
+): void {
+  let y = startY
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index]!
+    const firstStyle = line.fragments[0]?.styleName
+    const lineHeight = firstStyle === undefined ? theme.styles.body.lineHeight : theme.styles[firstStyle].lineHeight
+    let cursorX = x
+    for (let fragmentIndex = 0; fragmentIndex < line.fragments.length; fragmentIndex++) {
+      const fragment = line.fragments[fragmentIndex]!
+      const style = theme.styles[fragment.styleName]
+      cursorX += fragment.leadingGap
+      ctx.font = style.font
+      ctx.fillStyle = fallbackColor
+      ctx.textBaseline = 'alphabetic'
+      ctx.fillText(fragment.text, cursorX, y + lineHeight * 0.76)
+      cursorX += fragment.width
+    }
+    y += lineHeight
+  }
+}
+
+function getPreparedBlockHeight(lines: PreparedLine[], theme: Theme, fallbackStyle: 'h1' | 'lead'): number {
+  let height = 0
+  for (let index = 0; index < lines.length; index++) {
+    const firstStyle = lines[index]!.fragments[0]?.styleName ?? fallbackStyle
+    height += theme.styles[firstStyle].lineHeight
+  }
+  return height
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number): void {
