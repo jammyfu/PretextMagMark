@@ -1,0 +1,147 @@
+import type { LayoutCursor, PreparedTextWithSegments } from '../../../src/layout.js'
+
+export type { LayoutCursor, PreparedTextWithSegments }
+
+export type PresetKey = 'xiaohongshu' | 'long-image'
+export type ThemeKey = 'berry' | 'ink'
+export type OrnamentKey = 'editorial' | 'minimal'
+
+export type InlineStyleName =
+  | 'body'
+  | 'lead'
+  | 'strong'
+  | 'em'
+  | 'code'
+  | 'link'
+  | 'h1'
+  | 'h2'
+  | 'h3'
+  | 'quote'
+  | 'caption'
+  | 'list-prefix'
+
+export type InlineSpan = {
+  text: string
+  style: 'body' | 'strong' | 'em' | 'code' | 'link'
+}
+
+export type MarkdownBlock =
+  | { kind: 'heading'; depth: 1 | 2 | 3; spans: InlineSpan[] }
+  | { kind: 'paragraph'; spans: InlineSpan[] }
+  | { kind: 'blockquote'; spans: InlineSpan[] }
+  | { kind: 'list'; ordered: boolean; items: InlineSpan[][] }
+  | { kind: 'code'; code: string }
+  | { kind: 'divider' }
+  | { kind: 'image'; alt: string; url: string }
+
+export type TextStyle = {
+  font: string
+  color: string
+  lineHeight: number
+  gapWidth: number
+  inlinePaddingX: number
+  inlineBackground?: string
+  underline?: boolean
+}
+
+export type Theme = {
+  name: string
+  background: string
+  pageFill: string
+  pageEdge: string
+  ink: string
+  muted: string
+  accent: string
+  accentSoft: string
+  accentFaint: string
+  rule: string
+  styles: Record<InlineStyleName, TextStyle>
+  rhythm: {
+    leadIndent: number
+    paragraphIndent: number
+    sectionGap: number
+    compactGap: number
+  }
+}
+
+export type Preset = {
+  label: string
+  pageWidth: number
+  pageHeight: number | null
+  marginX: number
+  topInset: number
+  bottomInset: number
+  contentWidth: number
+}
+
+export type TextFragment = {
+  text: string
+  styleName: InlineStyleName
+  width: number
+  leadingGap: number
+}
+
+export type TextRow = {
+  kind: 'text'
+  y: number
+  height: number
+  x: number
+  lineWidth?: number
+  prefix?: {
+    text: string
+    styleName: InlineStyleName
+    width: number
+  }
+  fragments: TextFragment[]
+  tone?: 'quote' | 'code'
+}
+
+export type DividerRow = {
+  kind: 'divider'
+  y: number
+  height: number
+}
+
+export type ImageRow = {
+  kind: 'image'
+  y: number
+  height: number
+  alt: string
+  url: string
+}
+
+export type RenderRow = TextRow | DividerRow | ImageRow
+
+export type PageLayout = {
+  rows: RenderRow[]
+  height: number
+}
+
+export type RenderDocument = {
+  preset: Preset
+  theme: Theme
+  pages: PageLayout[]
+  blockCount: number
+  sourceLength: number
+}
+
+export type PreparedLineFragment = {
+  styleName: InlineStyleName
+  text: string
+  width: number
+  leadingGap: number
+}
+
+export type PreparedLine = {
+  fragments: PreparedLineFragment[]
+}
+
+export type TextInlineItem = {
+  styleName: InlineStyleName
+  prepared: PreparedTextWithSegments
+  endCursor: LayoutCursor
+  fullText: string
+  fullWidth: number
+  leadingGap: number
+  chromeWidth: number
+}

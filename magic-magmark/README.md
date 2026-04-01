@@ -1,29 +1,50 @@
 # MagicMagMark
 
-独立的 Markdown 精细排版项目，基于当前仓库的 Pretext 行布局逻辑实现。
+`magic-magmark/` is a fully isolated app that uses the current repository only as a text layout core. All MagMark-specific behavior lives inside this app:
 
-它不是继续挂在 demo 里的页面，而是一个可以单独运行的前端项目，目标是把 MagMark 风格的内容生产流程收敛成一个更聚焦的工具：
-- 导入 Markdown
-- 排成小红书卡片或长图
-- 导出高分辨率 PNG
+- import Markdown
+- compose social-media cards or long images
+- export high-resolution PNG files
 
-## 特点
+## Isolation model
 
-- 复用当前仓库 `src/layout.ts` 的行布局能力
-- 使用 `prepareWithSegments()` + `layoutNextLine()` 做逐行排版
-- 支持标题、段落、引用、列表、代码块、分隔线、图片占位块
-- 支持小红书 `1080 x 1440` 多页图
-- 支持 `1080 x auto` 长图
-- 支持 `2x / 3x / 4x` PNG 导出
+There is only one integration point with the parent repository:
+- `src/adapters/pretext.ts`
 
-## 目录
+That adapter is the only place that calls:
+- `prepareWithSegments()`
+- `layoutNextLine()`
 
-- [index.html](./index.html)
-- [src/main.ts](./src/main.ts)
-- [src/engine.ts](./src/engine.ts)
-- [src/styles.css](./src/styles.css)
+Everything else stays local to the standalone app:
+- Markdown parsing
+- themes and presets
+- block composition and pagination
+- canvas rendering
+- PNG export
+- UI state and controls
 
-## 运行
+## Structure
+
+- `index.html`: standalone entry
+- `src/main.ts`: UI state, events, export flow
+- `src/adapters/pretext.ts`: only Pretext adapter
+- `src/markdown/parser.ts`: Markdown parsing
+- `src/layout/compose.ts`: block layout, pagination, long-image composition
+- `src/render/canvas.ts`: Canvas rendering
+- `src/export/png.ts`: PNG export helpers
+- `src/themes/catalog.ts`: presets and themes
+- `src/domain/types.ts`: shared types
+
+## Features
+
+- reuses the repository `src/layout.ts` line layout logic
+- uses `prepareWithSegments()` and `layoutNextLine()` for real line breaking
+- supports headings, paragraphs, quotes, lists, code blocks, dividers, and image placeholders
+- supports `1080 x 1440` social card pagination
+- supports `1080 x auto` long-image output
+- supports `2x / 3x / 4x` PNG export
+
+## Run
 
 ```sh
 cd magic-magmark
@@ -31,24 +52,37 @@ npm install
 npm run dev
 ```
 
-默认地址：
+Default local URL:
 
 ```txt
 http://127.0.0.1:4173
 ```
 
-## 实现逻辑
+If you start from the repository root:
 
-1. Markdown 先被解析成轻量块模型。
-2. 每个块再拆成带样式的 inline spans。
-3. 每种字体样式通过 Pretext 做一次 `prepareWithSegments()`。
-4. 用 `layoutNextLine()` 逐行求出文本在目标宽度下的换行结果。
-5. 生成明确的 `x / y / width / height` 几何数据。
-6. 小红书模式下做固定页高分页，长图模式下直接累积总高度。
-7. 最终使用 Canvas 绘制并导出 PNG。
+```sh
+bun start
+```
 
-## 当前边界
+Then open:
 
-- Markdown 图片先渲染为占位块，不读取本地图片内容
-- 没有实现微信公众号 HTML 内嵌排版
-- 目前重点是图文排版与图片导出链路
+```txt
+http://127.0.0.1:3000/magic-magmark
+```
+
+## Pipeline
+
+1. Parse Markdown into lightweight content blocks.
+2. Convert each block into styled inline spans.
+3. Send text to `src/adapters/pretext.ts`.
+4. Use `prepareWithSegments()` and `layoutNextLine()` to compute wrapped lines.
+5. Compose those lines into paragraphs, quotes, lists, and pages in `src/layout/compose.ts`.
+6. Paginate fixed-height social cards or accumulate height for a long image.
+7. Render the final geometry to Canvas.
+8. Export Canvas as PNG.
+
+## Current limits
+
+- Markdown images are placeholders for now and are not drawn from local files
+- WeChat embedded HTML composition is intentionally not implemented
+- the current focus is layout fidelity plus image export
