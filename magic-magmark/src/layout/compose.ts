@@ -186,6 +186,17 @@ function composePagedLayout(blocks: MarkdownBlock[], preset: Preset, theme: Them
     if (placement === 'full-width') {
       while (true) {
         const startY = Math.max(...columnBottoms)
+        if (
+          currentRows.length > 0 &&
+          shouldAdvanceBeforePlacement(blocks, index, block, previous, preset, theme, placement, preset.marginX, preset.contentWidth, startY)
+        ) {
+          pushPage(pages, currentRows, pageHeight)
+          currentRows = []
+          currentColumn = 0
+          columnTop = preset.topInset
+          columnBottoms = createColumnBottoms(preset, preset.topInset)
+          continue
+        }
         const placed = layoutBlock(block, preset.marginX, preset.contentWidth, startY, theme, { previous })
         if (fitsOnPage(placed.nextY, preset) || currentRows.length === 0) {
           currentRows.push(...placed.rows)
@@ -206,6 +217,23 @@ function composePagedLayout(blocks: MarkdownBlock[], preset: Preset, theme: Them
       while (true) {
         const x = getColumnX(preset, currentColumn)
         const startY = Math.max(columnTop, columnBottoms[currentColumn]!)
+        if (
+          currentRows.length > 0 &&
+          shouldAdvanceBeforePlacement(blocks, index, block, previous, preset, theme, placement, x, columnWidth, startY)
+        ) {
+          if (currentColumn < preset.columnCount - 1) {
+            currentColumn++
+            columnBottoms[currentColumn] = Math.max(columnBottoms[currentColumn]!, columnTop)
+            continue
+          }
+
+          pushPage(pages, currentRows, pageHeight)
+          currentRows = []
+          currentColumn = 0
+          columnTop = preset.topInset
+          columnBottoms = createColumnBottoms(preset, preset.topInset)
+          continue
+        }
         const placed = layoutBlock(block, x, columnWidth, startY, theme, { previous })
         if (fitsOnPage(placed.nextY, preset) || currentRows.length === 0) {
           currentRows.push(...placed.rows)
@@ -235,6 +263,46 @@ function composePagedLayout(blocks: MarkdownBlock[], preset: Preset, theme: Them
   }
 
   return pages
+}
+
+function shouldAdvanceBeforePlacement(
+  blocks: MarkdownBlock[],
+  index: number,
+  block: MarkdownBlock,
+  previous: MarkdownBlock | null,
+  preset: Preset,
+  theme: Theme,
+  placement: 'full-width' | 'column',
+  x: number,
+  width: number,
+  startY: number,
+): boolean {
+  if (!isKeepWithNextBlock(block)) return false
+
+  const current = layoutBlock(block, x, width, startY, theme, { previous })
+  if (!fitsOnPage(current.nextY, preset)) return false
+
+  const nextBlock = findNextContentBlock(blocks, index + 1)
+  if (nextBlock === null) return false
+
+  const nextPlacement = getBlockPlacement(nextBlock, block)
+  const nextX = nextPlacement === 'full-width' ? preset.marginX : x
+  const nextWidth = nextPlacement === 'full-width' ? preset.contentWidth : width
+  const next = layoutBlock(nextBlock, nextX, nextWidth, current.nextY, theme, { previous: block })
+
+  return !fitsOnPage(next.nextY, preset)
+}
+
+function isKeepWithNextBlock(block: MarkdownBlock): boolean {
+  return block.kind === 'heading' || block.kind === 'divider'
+}
+
+function findNextContentBlock(blocks: MarkdownBlock[], fromIndex: number): MarkdownBlock | null {
+  for (let index = fromIndex; index < blocks.length; index++) {
+    const block = blocks[index]!
+    if (block.kind !== 'page-break') return block
+  }
+  return null
 }
 
 function getBlockPlacement(block: MarkdownBlock, previous: MarkdownBlock | null): 'full-width' | 'column' {
