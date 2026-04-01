@@ -3,7 +3,7 @@ import type { ImageFitMode, InlineSpan, MarkdownBlock } from '../domain/types'
 export function parseMarkdown(source: string): MarkdownBlock[] {
   const lines = source.replace(/\r\n?/g, '\n').split('\n')
   const blocks: MarkdownBlock[] = []
-  let index = 0
+  let index = skipFrontmatter(lines)
 
   while (index < lines.length) {
     const line = lines[index]!
@@ -122,6 +122,20 @@ export function parseMarkdown(source: string): MarkdownBlock[] {
   }
 
   return blocks
+}
+
+function skipFrontmatter(lines: string[]): number {
+  if (lines.length === 0) return 0
+  if (lines[0]!.trim() !== '---') return 0
+
+  for (let index = 1; index < lines.length; index++) {
+    const trimmed = lines[index]!.trim()
+    if (trimmed === '---' || trimmed === '...') {
+      return index + 1
+    }
+  }
+
+  return 0
 }
 
 function parseImageAttrs(text: string): { ratio?: string, fit: ImageFitMode } {
