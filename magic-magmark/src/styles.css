@@ -46,7 +46,7 @@ body {
 
 .workspace-shell {
   display: grid;
-  gap: 18px;
+  gap: 14px;
   min-height: calc(100vh - 28px);
 }
 
@@ -65,8 +65,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 20px 24px;
+  gap: 16px;
+  padding: 16px 20px;
 }
 
 .workspace-brand {
@@ -85,7 +85,7 @@ body {
 
 .workspace-title {
   margin: 0;
-  font: 700 clamp(28px, 3.4vw, 42px)/0.98 Georgia, "Times New Roman", "Songti SC", serif;
+  font: 700 clamp(24px, 3vw, 34px)/0.98 Georgia, "Times New Roman", "Songti SC", serif;
   letter-spacing: -0.03em;
 }
 
@@ -93,24 +93,25 @@ body {
   margin: 5px 0 0;
   color: var(--muted);
   max-width: 64ch;
-  line-height: 1.55;
+  line-height: 1.45;
+  font-size: 13px;
 }
 
 .workspace-modebar {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .mode-pill {
   display: inline-flex;
   align-items: center;
-  padding: 9px 14px;
+  padding: 8px 12px;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.74);
   color: var(--muted);
-  font: 600 12px/1 "Segoe UI", "PingFang SC", sans-serif;
+  font: 600 11px/1 "Segoe UI", "PingFang SC", sans-serif;
 }
 
 .mode-pill-active {
@@ -124,13 +125,15 @@ body {
   grid-template-columns: 1.2fr 2fr 1.1fr;
   gap: 0;
   overflow: hidden;
+  align-items: start;
 }
 
 .control-card {
   display: grid;
-  gap: 12px;
-  padding: 16px;
+  gap: 10px;
+  padding: 14px;
   border-right: 1px solid var(--line);
+  align-self: start;
 }
 
 .control-card:last-child {
@@ -143,7 +146,7 @@ body {
 .pager-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .control-row label,
@@ -162,7 +165,7 @@ body {
 .workspace-main {
   display: grid;
   grid-template-columns: minmax(420px, 1fr) minmax(420px, 640px);
-  gap: 18px;
+  gap: 14px;
   min-height: 0;
 }
 
@@ -175,8 +178,8 @@ body {
 
 .editor-stage {
   grid-template-rows: auto 1fr;
-  padding: 18px;
-  gap: 14px;
+  padding: 16px;
+  gap: 10px;
 }
 
 .editor-stage-head {
@@ -188,8 +191,8 @@ body {
 .editor-note {
   margin: 6px 0 0;
   color: var(--muted);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 label,
@@ -216,13 +219,13 @@ input[type="text"] {
 
 select,
 input[type="text"] {
-  min-height: 44px;
-  padding: 0 14px;
+  min-height: 40px;
+  padding: 0 12px;
 }
 
 textarea {
-  min-height: 620px;
-  padding: 16px;
+  min-height: 560px;
+  padding: 14px;
   resize: vertical;
   font: 13px/1.65 "Cascadia Code", "Consolas", "SFMono-Regular", ui-monospace, monospace;
 }
@@ -239,15 +242,15 @@ input[type="text"]:focus {
   appearance: none;
   border: 1px solid transparent;
   border-radius: 999px;
-  min-height: 42px;
-  padding: 0 15px;
+  min-height: 38px;
+  padding: 0 13px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   cursor: pointer;
   text-decoration: none;
-  font: 700 12px/1 "Segoe UI", "PingFang SC", sans-serif;
+  font: 700 11px/1 "Segoe UI", "PingFang SC", sans-serif;
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, opacity 140ms ease, background 140ms ease;
 }
 
@@ -289,8 +292,8 @@ label.tool-button {
   align-items: center;
   justify-content: center;
   min-width: 110px;
-  min-height: 42px;
-  padding: 0 14px;
+  min-height: 38px;
+  padding: 0 12px;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.92);
@@ -301,14 +304,14 @@ label.tool-button {
 
 .stats-card {
   display: grid;
-  gap: 8px;
-  padding: 14px;
+  gap: 6px;
+  padding: 12px;
   border-radius: 16px;
   background: rgba(252, 249, 243, 0.92);
   border: 1px solid rgba(25, 22, 18, 0.08);
   color: var(--muted);
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .preview-stage {
@@ -320,7 +323,7 @@ label.tool-button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 18px 22px;
+  padding: 16px 18px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -330,20 +333,20 @@ label.tool-button {
 }
 
 .preview-stage-title strong {
-  font: 700 19px/1.08 Georgia, "Times New Roman", "Songti SC", serif;
+  font: 700 17px/1.08 Georgia, "Times New Roman", "Songti SC", serif;
   letter-spacing: -0.03em;
 }
 
 .preview-stage-title span,
 .preview-meta {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .preview-stage-body {
   min-height: 0;
   overflow: auto;
-  padding: 24px;
+  padding: 18px;
   display: grid;
   place-items: center;
 }
