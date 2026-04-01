@@ -6,12 +6,13 @@ import { canvasToBlob, downloadBlob, escapeHtml, sanitizeStem } from './export/p
 import { buildRenderDocument } from './layout/compose'
 import { drawPageToCanvas } from './render/canvas'
 import { getFontPackLabel, resolveFontPackKeyForLanguage } from './themes/catalog'
-import { renderAppShell } from './ui/template'
+import { getUiCopy, renderAppShell, type UiLanguageKey } from './ui/template'
 
 type DomCache = {
   markdownInput: HTMLTextAreaElement
   fileInput: HTMLInputElement
   imageFiles: HTMLInputElement
+  uiLanguageSelect: HTMLSelectElement
   sampleButton: HTMLButtonElement
   documentName: HTMLInputElement
   presetSelect: HTMLSelectElement
@@ -51,6 +52,7 @@ type State = {
   imageAssets: Awaited<ReturnType<typeof resolveImageAssets>>
   imageFiles: File[]
   renderToken: number
+  uiLanguage: UiLanguageKey
 }
 
 const app = document.getElementById('app')
@@ -76,11 +78,13 @@ const st: State = {
   imageAssets: new Map(),
   imageFiles: [],
   renderToken: 0,
+  uiLanguage: 'zh',
 }
 
 dom.markdownInput.value = SAMPLE_MARKDOWN
 
 wireEvents()
+syncStaticUi()
 void document.fonts.ready.then(() => renderFromState())
 
 function getDom(): DomCache {
@@ -88,6 +92,7 @@ function getDom(): DomCache {
     markdownInput: getRequiredElement('markdown-input', HTMLTextAreaElement),
     fileInput: getRequiredElement('markdown-file', HTMLInputElement),
     imageFiles: getRequiredElement('image-files', HTMLInputElement),
+    uiLanguageSelect: getRequiredElement('ui-language-select', HTMLSelectElement),
     sampleButton: getRequiredElement('sample-button', HTMLButtonElement),
     documentName: getRequiredElement('document-name', HTMLInputElement),
     presetSelect: getRequiredElement('preset-select', HTMLSelectElement),
@@ -119,6 +124,12 @@ function getRequiredElement<T extends Element>(id: string, ctor: { new (): T }):
 }
 
 function wireEvents(): void {
+  dom.uiLanguageSelect.addEventListener('change', () => {
+    st.uiLanguage = dom.uiLanguageSelect.value as UiLanguageKey
+    syncStaticUi()
+    syncUi()
+  })
+
   dom.renderButton.addEventListener('click', () => {
     void renderFromState()
   })
@@ -261,33 +272,108 @@ function syncUi(): void {
   if (doc === null) return
   const page = doc.pages[st.currentPageIndex]
   if (page === undefined) return
+  const copy = getUiCopy(st.uiLanguage)
 
   const pageCount = doc.pages.length
-  dom.pageChip.textContent = `Page ${st.currentPageIndex + 1} / ${pageCount}`
+  dom.pageChip.textContent = st.uiLanguage === 'zh'
+    ? `第 ${st.currentPageIndex + 1} / ${pageCount} 页`
+    : `Page ${st.currentPageIndex + 1} / ${pageCount}`
   dom.prevPageButton.disabled = pageCount <= 1 || st.currentPageIndex === 0
   dom.nextPageButton.disabled = pageCount <= 1 || st.currentPageIndex === pageCount - 1
   dom.exportAllButton.disabled = st.presetKey === 'long-image'
 
-  dom.previewHeading.textContent = doc.preset.label
-  dom.previewSubheading.textContent = `${doc.theme.name} | ${doc.blockCount} blocks`
-  dom.previewMeta.textContent = `${doc.preset.pageWidth} x ${Math.round(page.height)} | ${pageCount} pages`
+  dom.previewHeading.textContent = copy.livePreview
+  dom.previewSubheading.textContent = `${doc.theme.name} | ${st.uiLanguage === 'zh' ? `${doc.blockCount} 个内容块` : `${doc.blockCount} blocks`}`
+  dom.previewMeta.textContent = st.uiLanguage === 'zh'
+    ? `${doc.preset.pageWidth} x ${Math.round(page.height)} | ${pageCount} 页`
+    : `${doc.preset.pageWidth} x ${Math.round(page.height)} | ${pageCount} pages`
 
-  const summary = [
-    `Blocks: ${doc.blockCount}`,
-    `Characters: ${doc.sourceLength}`,
-    `Pages: ${pageCount}`,
-    `Canvas size: ${doc.preset.pageWidth} x ${Math.round(page.height)}`,
-    `Grid: ${doc.preset.columnCount} column${doc.preset.columnCount > 1 ? 's' : ''}${doc.preset.columnCount > 1 ? `, ${doc.preset.columnGap}px gap` : ''}`,
-    st.presetKey === 'xiaohongshu' ? 'Mode: auto-paginated social cards' : 'Mode: single long image',
-    `Font pack: ${getFontPackLabel(st.fontPackKey)}`,
-    `Language: ${st.languageMode}`,
-    `Density: ${st.densityKey}`,
-    `Cover template: ${st.coverTemplate}`,
-    `Export scale: ${st.scale}x`,
-    `Images resolved: ${st.imageAssets.size} / ${countImageRefs(doc)}`,
-    'Tip: imported images are matched by file name to Markdown image URLs.',
-  ]
+  const summary = st.uiLanguage === 'zh'
+    ? [
+        `内容块数：${doc.blockCount}`,
+        `字符数：${doc.sourceLength}`,
+        `页数：${pageCount}`,
+        `画布尺寸：${doc.preset.pageWidth} x ${Math.round(page.height)}`,
+        `网格：${doc.preset.columnCount} 栏${doc.preset.columnCount > 1 ? `，栏距 ${doc.preset.columnGap}px` : ''}`,
+        st.presetKey === 'xiaohongshu' ? '模式：自动分页社交卡片' : '模式：单张长图',
+        `字体包：${getFontPackLabel(st.fontPackKey)}`,
+        `排版语言：${dom.languageModeSelect.selectedOptions[0]?.textContent ?? st.languageMode}`,
+        `密度：${dom.densitySelect.selectedOptions[0]?.textContent ?? st.densityKey}`,
+        `封面模板：${dom.coverTemplateSelect.selectedOptions[0]?.textContent ?? st.coverTemplate}`,
+        `导出倍率：${st.scale}x`,
+        `已匹配图片：${st.imageAssets.size} / ${countImageRefs(doc)}`,
+        '提示：导入图片会按文件名匹配 Markdown 里的图片 URL。',
+      ]
+    : [
+        `Blocks: ${doc.blockCount}`,
+        `Characters: ${doc.sourceLength}`,
+        `Pages: ${pageCount}`,
+        `Canvas size: ${doc.preset.pageWidth} x ${Math.round(page.height)}`,
+        `Grid: ${doc.preset.columnCount} column${doc.preset.columnCount > 1 ? 's' : ''}${doc.preset.columnCount > 1 ? `, ${doc.preset.columnGap}px gap` : ''}`,
+        st.presetKey === 'xiaohongshu' ? 'Mode: auto-paginated social cards' : 'Mode: single long image',
+        `Font pack: ${getFontPackLabel(st.fontPackKey)}`,
+        `Layout language: ${dom.languageModeSelect.selectedOptions[0]?.textContent ?? st.languageMode}`,
+        `Density: ${dom.densitySelect.selectedOptions[0]?.textContent ?? st.densityKey}`,
+        `Cover template: ${dom.coverTemplateSelect.selectedOptions[0]?.textContent ?? st.coverTemplate}`,
+        `Export scale: ${st.scale}x`,
+        `Images resolved: ${st.imageAssets.size} / ${countImageRefs(doc)}`,
+        'Tip: imported images are matched by file name to Markdown image URLs.',
+      ]
   dom.stats.innerHTML = summary.map(item => `<div>${escapeHtml(item)}</div>`).join('')
+}
+
+function syncStaticUi(): void {
+  const copy = getUiCopy(st.uiLanguage)
+  setText('app-eyebrow', copy.appEyebrow)
+  setText('app-title', copy.appTitle)
+  setText('app-intro', copy.appIntro)
+  setText('ui-language-label', copy.uiLanguageLabel)
+  setText('content-title', copy.contentTitle)
+  setText('import-markdown-label', copy.importMarkdown)
+  setText('import-images-label', copy.importImages)
+  setText('file-name-label', copy.fileName)
+  setText('markdown-label', copy.markdown)
+  setText('export-title', copy.exportTitle)
+  setText('preset-label', copy.preset)
+  setText('theme-label', copy.theme)
+  setText('font-pack-label', copy.fontPack)
+  setText('language-mode-label', copy.languageMode)
+  setText('density-label', copy.density)
+  setText('scale-label', copy.scale)
+  setText('ornament-label', copy.ornament)
+  setText('cover-label', copy.cover)
+  setText('actions-title', copy.actionsTitle)
+  setText('waiting-copy', copy.waiting)
+  dom.sampleButton.textContent = copy.loadSample
+  dom.renderButton.textContent = copy.reflow
+  dom.exportCurrentButton.textContent = copy.exportCurrent
+  dom.exportAllButton.textContent = copy.exportAll
+  dom.prevPageButton.textContent = copy.previous
+  dom.nextPageButton.textContent = copy.next
+  dom.previewHeading.textContent = copy.livePreview
+  dom.previewSubheading.textContent = copy.previewSubheading
+  dom.uiLanguageSelect.value = st.uiLanguage
+
+  setSelectOptionText(dom.presetSelect, copy.presetOptions)
+  setSelectOptionText(dom.themeSelect, copy.themeOptions)
+  setSelectOptionText(dom.densitySelect, copy.densityOptions)
+  setSelectOptionText(dom.scaleSelect, copy.scaleOptions)
+  setSelectOptionText(dom.ornamentSelect, copy.ornamentOptions)
+  setSelectOptionText(dom.coverTemplateSelect, copy.coverOptions)
+  setSelectOptionText(dom.languageModeSelect, copy.languageModeOptions)
+}
+
+function setText(id: string, value: string): void {
+  const element = document.getElementById(id)
+  if (element !== null) element.textContent = value
+}
+
+function setSelectOptionText(select: HTMLSelectElement, labels: Record<string, string>): void {
+  for (let index = 0; index < select.options.length; index++) {
+    const option = select.options[index]!
+    const label = labels[option.value]
+    if (label !== undefined) option.textContent = label
+  }
 }
 
 function paintPreview(): void {
